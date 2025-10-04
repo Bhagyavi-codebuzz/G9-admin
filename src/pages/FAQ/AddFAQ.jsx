@@ -1,0 +1,124 @@
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import left from "../../assets/Images/lefticon.png";
+import { Editor } from 'primereact/editor';
+import { loaders } from '../../componet/loader/Loader';
+import { authorizationHeaders, authorizationHeadersImage, Axios } from '../../componet/helper/Axios';
+import { apiendpoints } from '../../componet/constants/apiroutes';
+
+
+const initialState = {
+    question: "",
+    answer: ""
+}
+const AddFAQ = () => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState(initialState);
+console.log(formData);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        console.log(formData)
+        setLoading(true);
+
+        try {
+            const form = new FormData();
+            form.append("question", formData.question);
+            form.append("answer", formData.answer);
+
+            const res = await Axios.post(apiendpoints.addFaq, form, authorizationHeaders()); // ✅ use `form` here
+
+            if (res.data?.status) {
+                toast.success(res.data?.mesage);
+                setFormData(initialState);
+                navigate("/admin/faq");
+            } else {
+                toast.error(res.data?.mesage);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+
+    }
+
+    const handleChange = (e) => {
+        const { name, value, files } = e.target;
+        let newValue = value
+        setFormData((prev) => ({
+            ...prev,
+            [name]: files ? files[0] : newValue.trimStart(),
+        }));
+    }
+
+
+    return (
+        <>
+            <section className="categorylist-section mt-4 mt-lg-4 mt-xl-5">
+                <div className="edit-user">
+                    <div className="row">
+                        <div className="d-flex align-items-center justify-content-between gap-3">
+                            <h2 className="d-flex mb-0 title">
+                                <div className='pe-4' style={{ cursor: 'pointer' }} onClick={() => navigate(-1)}>
+                                    <img src={left} alt="" style={{ height: '30px' }} />
+                                </div>
+                                <div>
+                                    Add FAQ
+                                </div>
+                            </h2>
+                        </div>
+
+                        <form className="row g-3 gx-4"
+                            onSubmit={handleSubmit} >
+
+                            <div className=" col-12 mb-2">
+                                <label htmlFor="question" className="form-label">
+                                    Question :
+                                </label>
+                                <input
+                                    type="text"
+                                    name="question"
+                                    id="question"
+                                    className="form-control"
+                                    placeholder="Enter Question"
+                                    autoComplete='off'
+                                    value={formData.question}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="col-12 mb-2">
+                                <label htmlFor="description" className="form-label">
+                                    Answer  :
+                                </label>
+                                <Editor value={formData.answer}
+                                    onTextChange={(e) => setFormData({ ...formData, answer: e.htmlValue })} style={{ height: '320px' }} />
+                            </div>
+
+                            <div className="text-end">
+                                <button
+                                    type="submit"
+                                    className={`submit-btn ${loading ? 'btn-loading' : ''}`}
+                                    disabled={loading}
+                                >
+                                    {loading && loaders.small}
+                                    {loading ?
+                                        'Submitting...'
+                                        :
+                                        'Submit'
+                                    }
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </>
+    )
+}
+
+export default AddFAQ
