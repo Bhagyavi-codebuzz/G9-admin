@@ -927,9 +927,9 @@ const ProductsEdit = () => {
                                         required
                                     >
                                         <option value="">-- Select Diamond Cut --</option>
-                                        <option value="Excellent">Excellent</option>
-                                        <option value="Very_Good">Very Good</option>
-                                        <option value="Good">Good</option>
+                                        <option value="excellent">Excellent</option>
+                                        <option value="verygood">Very Good</option>
+                                        <option value="good">Good</option>
                                     </select>
                                 </div>
 
