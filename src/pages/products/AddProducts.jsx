@@ -743,13 +743,13 @@ const AddProducts = () => {
                                 required
                             >
                                 <option value="">-- Select Diamond Cut --</option>
-                                <option value="excellent">
+                                <option value="Excellent">
                                     Excellent
                                 </option>
-                                <option value="verygood">
+                                <option value="Very_Good">
                                     Very Good
                                 </option>
-                                <option value="good">
+                                <option value="Good">
                                     Good
                                 </option>
                             </select>
