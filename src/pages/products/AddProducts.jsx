@@ -11,18 +11,22 @@ import { da } from 'date-fns/locale';
 const initialState = {
     title: "",
     images: [],
+    metalsData: {},
     description: "",
     stockNumber: "",
     shortDescription: "",
     estimatedTime: "",
-    // price:""
+    price: [],
     original_price: "",
     selling_price: "",
+    profit: "",
+    gst: "",
     productMaterials: [],
     categoryId: '',
     subCategoryId: '',
     metalId: [],
     stoneShapeId: "",
+    diamondCut: "",
     goldPurityId: [],
     discounted: 0,
     readyToShip: 0,
@@ -41,43 +45,48 @@ const AddProducts = () => {
     const [stoneShape, setStoneShape] = useState([]);
     const [goldPurity, setGoldPurity] = useState([]);
     const [videoFile, setVideoFile] = useState(null);
+    const [previewsByMetal, setPreviewsByMetal] = useState({});
     const [videoPreview, setVideoPreview] = useState("");
+    const [activeGoldPurityId, setActiveGoldPurityId] = useState(null);
+    const [activemetalId, setActivemetalId] = useState(null);
+
     const fileInputRef = useRef(null);
 
     const handleVideoChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setVideoFile(file);
-            setVideoPreview(URL.createObjectURL(file));
-        }
+        if (!file || !activemetalId) return;
+
+        // ✅ Store file
+        setFormData(prev => ({
+            ...prev,
+            metalsData: {
+                ...prev.metalsData,
+                [activemetalId]: {
+                    ...(prev.metalsData[activemetalId] || {}),
+                    video: file
+                }
+            }
+        }));
+
+        // ✅ Store preview
+        setPreviewsByMetal(prev => ({
+            ...prev,
+            [activemetalId]: {
+                ...(prev[activemetalId] || {}),
+                videoPreview: URL.createObjectURL(file)
+            }
+        }));
     };
-
-    // // ✅ remove one image
-    // const removeImageAt = (index) => {
-    //     setFormData((prev) => {
-    //         const newImages = [...prev.blogImage];
-    //         newImages.splice(index, 1);
-    //         return { ...prev, blogImage: newImages };
-    //     });
-
-    //     setPreviews((prev) => {
-    //         const newPreviews = [...prev];
-    //         URL.revokeObjectURL(newPreviews[index]); // cleanup
-    //         newPreviews.splice(index, 1);
-    //         return newPreviews;
-    //     });
-    // };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const requiredFields = [
             "title", "description", "stockNumber", "estimatedTime",
-            "original_price", "selling_price", "productMaterials",
-            "categoryId", "subCategoryId", "metalId",
-            "stoneShapeId", "goldPurityId", "shortDescription"
+            "categoryId", "subCategoryId", "metalId", "stoneShapeId", "goldPurityId", "shortDescription"
         ];
 
+        // Validate required fields
         for (const field of requiredFields) {
             if (!formData[field] ||
                 (Array.isArray(formData[field]) && formData[field].length === 0) ||
@@ -88,102 +97,167 @@ const AddProducts = () => {
             }
         }
 
-        // ✅ Product materials validation
-        if (formData.productMaterials) {
-            const validMaterials = formData.productMaterials.filter(
-                (m) => m.name?.trim() && m.value?.trim()
-            );
 
-            if (validMaterials.length === 0) {
-                toast.error("At least one valid product material (name & value) is required!");
+        const form = new FormData();
+
+        // Append simple fields
+        form.append("title", formData.title);
+        form.append("estimatedTime", formData.estimatedTime);
+        form.append("description", formData.description);
+        form.append("stockNumber", formData.stockNumber);
+        form.append("categoryId", formData.categoryId);
+        form.append("subCategoryId", formData.subCategoryId);
+        form.append("metals", JSON.stringify(formData.metalId)); // Convert array to JSON
+        form.append("stoneShapeId", formData.stoneShapeId);
+        form.append("shortDescription", formData.shortDescription);
+        form.append("diamondCut", formData.diamondCut);
+        form.append("discounted", formData.discounted);
+        form.append("readyToShip", formData.readyToShip);
+        form.append("topSelling", formData.topSelling);
+        form.append("newArrival", formData.newArrival);
+
+        // Append nested array (productMaterials)
+        const materialsObj = formData.productMaterials
+            .filter(m => m.name?.trim() && m.value?.trim())
+            .reduce((acc, m) => {
+                acc[m.name.trim()] = m.value.trim();
+                return acc;
+            }, {});
+        form.append("productMaterials", JSON.stringify(materialsObj));
+
+        // Append purity array if it exists
+        if (formData.purity && formData.purity.length > 0) {
+            form.append("purity", JSON.stringify(formData.purity));
+        }
+
+        // ✅ Gold purity validation
+        if (!formData.goldPurityId || formData.goldPurityId.length === 0) {
+            toast.error("At least one gold purity must be selected!");
+            return;
+        }
+
+        // ✅ Metal media validation (optional: at least one image per metal)
+        for (const metalId of Object.keys(formData.metalsData)) {
+            const metal = formData.metalsData[metalId];
+            if (!metal.images?.length && !metal.video) {
+                toast.error(`At least one image or video is required for metal ID ${metalId}`);
                 return;
             }
         }
 
-        // ✅ Images validation
-        if (!formData.images || formData.images.length < 2) {
-            toast.error("At least two images are required!");
-            return;
-        }
-
+        // ✅ Minimum images for product (optional)
+        // if (!formData.images || formData.images.length < 2) {
+        //     toast.error("At least two product images are required!");
+        //     return;
+        // }
         setLoading(true);
-
         try {
-            const form = new FormData();
-
-            Object.keys(formData).forEach((key) => {
-                if (key === "images") {
-                    formData.images.forEach((file) => form.append("images", file));
-                } else if (key === "productMaterials") {
-                    const materialsObj = formData.productMaterials
-                        .filter((m) => m.name?.trim() && m.value?.trim())
-                        .reduce((acc, m) => {
-                            acc[m.name.trim()] = m.value.trim();
-                            return acc;
-                        }, {});
-
-                    form.append("productMaterials", JSON.stringify(materialsObj));
-                } else {
-                    form.append(key, formData[key]);
-                }
-            });
-
-            if (videoFile) form.append("video", videoFile);
-
-            const res = await Axios.post(
-                apiendpoints.addProducts,
-                form,
-                authorizationHeadersImage()
-            );
+            // Call the addProducts API
+            const res = await Axios.post(apiendpoints.addProducts, form, authorizationHeaders());
 
             if (res.data?.status) {
-                toast.success(res.data?.message);
+                // toast.success(res.data?.message);
+
+                // Call the add-media API for each metalId with images or video
+                for (const metalId of Object.keys(formData.metalsData)) {
+                    const metalData = formData.metalsData[metalId];
+                    if (metalData?.images?.length > 0 || metalData?.video) {
+                        const mediaForm = new FormData();
+                        mediaForm.append("stockNumber", formData.stockNumber);
+                        mediaForm.append("metalId", metalId);
+
+                        // Append images with a more explicit key structure
+                        if (metalData.images?.length > 0) {
+                            metalData.images.forEach((image, index) => {
+                                mediaForm.append("images", image); // Simplified to single 'images' key
+                            });
+                        }
+                        else {
+                            toast.error("Please Add Img")
+                        }
+
+                        // Append video if it exists
+                        if (metalData.video) {
+                            mediaForm.append("video", metalData.video);
+                        }
+
+                        try {
+                            const mediaRes = await Axios.post(
+                                apiendpoints.addProductMedia,
+                                mediaForm,
+                                {
+                                    ...authorizationHeadersImage(),
+                                    headers: { "Content-Type": "multipart/form-data" } // Explicitly set content type
+                                }
+                            );
+
+                            if (mediaRes.data?.status) {
+                                navigate("/admin/products");
+                                toast.success(mediaRes.data?.message);
+                            } else {
+                                toast.error(`Failed to upload media for metal ID ${metalId}: ${mediaRes.data?.message || 'Unknown error'}`);
+                            }
+                        } catch (mediaErr) {
+                            console.error(`Error uploading media for metal ID ${metalId}:`, mediaErr.response?.data || mediaErr.message);
+                            toast.error(`Failed to upload media for metal ID ${metalId}: ${mediaErr.response?.data?.message || 'Server error'}`);
+                        }
+                    }
+                }
+
+                // Reset form and navigate
                 setFormData(initialState);
                 setPreviews([]);
                 setVideoFile(null);
                 setVideoPreview("");
-                navigate("/admin/products");
+
             } else {
-                toast.error(res.data?.message);
+                toast.error(res.data?.message || "Failed to add product");
             }
         } catch (err) {
-            console.error(err);
-            toast.error("Something went wrong!");
+            console.error("Add product error:", err.response?.data || err.message);
+            toast.error("Something went wrong while adding the product!");
         } finally {
             setLoading(false);
         }
     };
 
     const handleChange = (e) => {
-        const { name, files, value, type } = e.target;
+        const { name, files } = e.target;
+        if (!activemetalId) return;
 
-        if (files) {
-            // for multiple images
-            if (name === "images") {
-                const list = Array.from(files);
-                setFormData((prev) => ({
-                    ...prev,
-                    images: [...prev.images, ...list],
-                }));
-                const urls = list.map((f) => URL.createObjectURL(f));
-                setPreviews((prev) => [...prev, ...urls]);
+        if (files && name === "images") {
+            const list = Array.from(files);
 
-                // ✅ clear input value so same file can be re-added if removed
-                e.target.value = "";
-            }
-        } else if (type === "radio") {
-            setFormData((prev) => ({
+            setFormData(prev => ({
                 ...prev,
-                [name]: value === "true",
+                metalsData: {
+                    ...prev.metalsData,
+                    [activemetalId]: {
+                        ...(prev.metalsData[activemetalId] || {}),
+                        images: [
+                            ...(prev.metalsData[activemetalId]?.images || []),
+                            ...list
+                        ]
+                    }
+                }
             }));
-        } else {
-            setFormData((prev) => ({
+
+            // ✅ Store previews
+            const urls = list.map(f => URL.createObjectURL(f));
+            setPreviewsByMetal(prev => ({
                 ...prev,
-                [name]: value.trimStart(),
+                [activemetalId]: {
+                    ...(prev[activemetalId] || {}),
+                    images: [
+                        ...(prev[activemetalId]?.images || []),
+                        ...urls
+                    ]
+                }
             }));
+
+            e.target.value = ""; // reset file input
         }
     };
-
 
     useEffect(() => {
         return () => {
@@ -200,29 +274,29 @@ const AddProducts = () => {
         });
     };
 
-
-
     // ✅ Remove image at index
-    const handleRemoveImage = (index) => {
-        setFormData((prev) => ({
+    const handleRemoveImage = (idx) => {
+        if (!activemetalId) return;
+
+        setFormData(prev => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index),
+            metalsData: {
+                ...prev.metalsData,
+                [activemetalId]: {
+                    ...prev.metalsData[activemetalId],
+                    images: prev.metalsData[activemetalId].images.filter((_, i) => i !== idx)
+                }
+            }
         }));
 
-        setPreviews((prev) => {
-            const updatedPreviews = [...prev];
-            URL.revokeObjectURL(updatedPreviews[index]); // cleanup memory
-            updatedPreviews.splice(index, 1);
-            return updatedPreviews;
-        });
-
-        // ✅ clear input value completely
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        setPreviewsByMetal(prev => ({
+            ...prev,
+            [activemetalId]: {
+                ...prev[activemetalId],
+                images: prev[activemetalId].images.filter((_, i) => i !== idx)
+            }
+        }));
     };
-
-
 
     // Remove a material
     const removeMaterial = (index) => {
@@ -240,7 +314,6 @@ const AddProducts = () => {
             productMaterials: [...prev.productMaterials, { name: "", value: "" }]
         }));
     };
-
 
     const handleInput = (e) => {
         const { name, value } = e.target;
@@ -268,136 +341,104 @@ const AddProducts = () => {
         }
     };
 
-
     const fetchCategory = async () => {
-
         try {
             const res = await Axios.get(apiendpoints.category, authorizationHeaders());
-
             if (res.data?.status) {
                 setCategory(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
             if (err?.message === "Network Error") {
                 setError(err.message);
             }
             if (err.response?.status === 404) {
                 setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
+            } else if (err.response?.status === 500) {
                 setError(err.response.data.message);
             }
-        } finally {
-            // setLoader(false);
         }
     }
 
     const fetchSubCategory = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.subCategory}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setSubcategory(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
             if (err?.message === "Network Error") {
                 setError(err.message);
             }
             if (err.response?.status === 404) {
                 setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
+            } else if (err.response?.status === 500) {
                 setError(err.response.data.message);
             }
-        } finally {
         }
     }
 
     const fetchMetals = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.metal}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setmetals(res.data?.data || []);
                 console.log("metals", metals)
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
             if (err?.message === "Network Error") {
                 setError(err.message);
             }
             if (err.response?.status === 404) {
                 setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
+            } else if (err.response?.status === 500) {
                 setError(err.response.data.message);
             }
-        } finally {
         }
     }
 
     const fetchStoneShape = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.StoneShape}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setStoneShape(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
             if (err?.message === "Network Error") {
                 setError(err.message);
             }
             if (err.response?.status === 404) {
                 setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
+            } else if (err.response?.status === 500) {
                 setError(err.response.data.message);
             }
-        } finally {
         }
     }
 
     const fetchgoldPurity = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.goldPurity}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setGoldPurity(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
             if (err?.message === "Network Error") {
                 setError(err.message);
             }
             if (err.response?.status === 404) {
                 setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
+            } else if (err.response?.status === 500) {
                 setError(err.response.data.message);
             }
-        } finally {
         }
     }
 
@@ -413,8 +454,6 @@ const AddProducts = () => {
             return numA - numB;
         });
 
-
-
     useEffect(() => {
         fetchCategory();
         fetchSubCategory();
@@ -422,6 +461,49 @@ const AddProducts = () => {
         fetchStoneShape();
         fetchgoldPurity();
     }, [])
+
+    useEffect(() => {
+        if (!formData.goldPurityId?.length) return;
+
+        const purityArray = formData.goldPurityId.map((id) => {
+            const name = goldPurity.find((m) => m.id.toString() === id.toString())?.name || "";
+
+            const originalPrice = parseFloat(formData.original_price?.[id] || 0);
+            const selling = parseFloat(formData.selling_price?.[id] || 0);
+            const profitValue = parseFloat(formData.profit?.[id] || 0);
+            const gstValue = parseFloat(formData.gst?.[id] || 0);
+
+            // Calculations
+            const profitsellingAmount = (selling * profitValue) / 100;
+            const profitoriginalAmount = (originalPrice * profitValue) / 100;
+            const profitsellingprice = selling + profitsellingAmount;
+            const profitoriginalprice = originalPrice + profitoriginalAmount;
+            const totalProfitAmount = selling + profitsellingAmount;
+            const gstAmount = (totalProfitAmount * gstValue) / 100;
+            const finalTotal = totalProfitAmount + gstAmount;
+
+            return {
+                value: Number(id),
+                name,
+                original_price: originalPrice.toFixed(2) || 0,
+                selling_price: selling.toFixed(2),
+                profit: profitValue + "%",
+                profitoriginalAmount: profitoriginalAmount.toFixed(2),
+                profitsellingAmount: profitsellingAmount.toFixed(2),
+                profitoriginalprice: profitoriginalprice.toFixed(2) || 0,
+                profitsellingprice: profitsellingprice.toFixed(2),
+                gst: gstValue + "%",
+                gstAmount: gstAmount.toFixed(2),
+                gstPrice: finalTotal.toFixed(2),
+            };
+        });
+
+        setFormData(prev => ({
+            ...prev,
+            purity: purityArray
+        }));
+
+    }, [formData.goldPurityId, formData.original_price, formData.selling_price, formData.profit, formData.gst]);
 
     return (
         <section className="categorylist-section product mt-4 mt-lg-4 mt-xl-5">
@@ -441,7 +523,6 @@ const AddProducts = () => {
                     </div>
 
                     <form className="row g-3 gx-4" onSubmit={handleSubmit}>
-
                         <p>1. Basic Product Information</p>
 
                         {/* Stock Number */}
@@ -525,7 +606,7 @@ const AddProducts = () => {
                             </select>
                         </div>
 
-                        <p>2. Jewellery Specifications</p>
+                        <p className='mt-5'>2. Jewellery Specifications</p>
 
                         {/* metal select */}
                         <div className="col-lg-6 col-md-6 col-12 mb-2">
@@ -582,7 +663,7 @@ const AddProducts = () => {
                                 name="goldPurityId"
                                 id="goldPurityId"
                                 className="form-select"
-                                onChange={handleInput}   // no value binding, behaves like metals
+                                onChange={handleInput}
                                 required
                             >
                                 <option value="">-- Select Purity --</option>
@@ -650,141 +731,281 @@ const AddProducts = () => {
 
                         {/* Diamond cut Select */}
                         <div className="col-lg-6 col-md-6 col-12 mb-2">
-                            <label htmlFor="stoneShapeId" className="form-label">
+                            <label htmlFor="diamondCut" className="form-label">
                                 Select Diamond Cut:
                             </label>
                             <select
-                                name="stoneShapeId"
-                                id="stoneShapeId"
+                                name="diamondCut"
+                                id="diamondCut"
                                 className="form-select"
-                                value={formData.stoneShapeId || ""}
+                                value={formData.diamondCut || ""}
                                 onChange={handleInput}
                                 required
                             >
-                                <option value="">-- Select Stone Shape --</option>
-
-                                <option  >
-
+                                <option value="">-- Select Diamond Cut --</option>
+                                <option value="excellent">
+                                    Excellent
                                 </option>
-
+                                <option value="verygood">
+                                    Very Good
+                                </option>
+                                <option value="good">
+                                    Good
+                                </option>
                             </select>
                         </div>
 
-                        <p>3. Pricing & Stock</p>
+                        <p className='mt-5'>3. Pricing & Stock</p>
                         <div className="col-12 mb-2">
                             <label htmlFor="price" className="form-label">
                                 Enter Price According to Purity:
                             </label>
 
-                                {/* Show selected goldPurity with price input */}
-                                {formData.goldPurityId?.length > 0 && (
-                                    <div className="mt-2">
-                                        {formData.goldPurityId.map((item) => {
-                                            const goldPurityName = goldPurity.find(
-                                                (m) => m.id.toString() === item.id
-                                            )?.name;
+                            {/* Show selected goldPurity with price input */}
+                            {formData.goldPurityId?.length > 0 && (
+                                <div className="mt-2">
+                                    <div className="d-flex flex-wrap gap-2 mb-2">
+                                        {formData.goldPurityId.map((id) => {
+                                            const goldPurityName =
+                                                goldPurity.find((m) => m.id.toString() === id.toString())?.name || id;
+
+                                            const isActive = activeGoldPurityId === id;
 
                                             return (
-                                                <div key={item.id} className="d-flex align-items-center mb-2">
-                                                    <span className="badge bg-primary p-2 fs-6 me-2">
-                                                        {goldPurityName}
-                                                        <button
-                                                            type="button"
-                                                            className="btn-close btn-close-white ms-2"
-                                                            style={{ fontSize: "10px" }}
-                                                            onClick={() =>
-                                                                setFormData((prev) => ({
-                                                                    ...prev,
-                                                                    goldPurityId: prev.goldPurityId.filter(
-                                                                        (p) => p.id !== item.id
-                                                                    ),
-                                                                }))
-                                                            }
-                                                        ></button>
-                                                    </span>
-
-                                                    {/* Price input */}
-                                                    <input
-                                                        type="number"
-                                                        className="form-control w-50 ms-2"
-                                                        placeholder={`Enter price for ${goldPurityName}`}
-                                                        value={item.price}
-                                                        onChange={(e) =>
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                goldPurityId: prev.goldPurityId.map((p) =>
-                                                                    p.id === item.id ? { ...p, price: e.target.value } : p
-                                                                ),
-                                                            }))
-                                                        }
-                                                    />
-                                                </div>
+                                                <span
+                                                    key={id}
+                                                    className={`badge p-2 fs-6 ${isActive ? "bg-success" : "bg-primary"}`}
+                                                    style={{ cursor: "pointer", minWidth: "50px", textAlign: "center" }}
+                                                    onClick={() => setActiveGoldPurityId(isActive ? null : id)}
+                                                >
+                                                    {goldPurityName}
+                                                </span>
                                             );
                                         })}
                                     </div>
-                                )}
 
+                                    {/* Inputs for active tab, full screen width */}
+                                    {activeGoldPurityId && (
+                                        <div className="row">
+                                            <div className="col-lg-3 col-md-6 col-12">
+                                                <label className="form-label">Original Price</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control mb-2"
+                                                    placeholder={`Enter original price`}
+                                                    value={formData.original_price?.[activeGoldPurityId] || ""}
+                                                    onChange={(e) =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            original_price: { ...prev.original_price, [activeGoldPurityId]: e.target.value },
+                                                        }))
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="col-lg-3 col-md-6 col-12">
+                                                <label className="form-label">Selling Price</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="form-control mb-2"
+                                                    placeholder={`Enter selling price`}
+                                                    value={formData.selling_price?.[activeGoldPurityId] || ""}
+                                                    onChange={(e) =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            selling_price: { ...prev.selling_price, [activeGoldPurityId]: e.target.value },
+                                                        }))
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="col-lg-3 col-md-6 col-12">
+                                                <label className="form-label">Profit Percentage</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="form-control mb-2"
+                                                    placeholder={`Enter profit percentage`}
+                                                    value={formData.profit?.[activeGoldPurityId] || ""}
+                                                    onChange={(e) =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            profit: { ...prev.profit, [activeGoldPurityId]: e.target.value },
+                                                        }))
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="col-lg-3">
+                                                <label className="form-label">GST</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="form-control mb-2"
+                                                    placeholder={`Enter GST`}
+                                                    value={formData.gst?.[activeGoldPurityId] || ""}
+                                                    onChange={(e) =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            gst: { ...prev.gst, [activeGoldPurityId]: e.target.value },
+                                                        }))
+                                                    }
+                                                />
+                                            </div>
 
+                                            {/* Totals for this active purity */}
+                                            <div className="col-12 mt-3">
+                                                {(() => {
+                                                    const selling = parseFloat(formData.selling_price?.[activeGoldPurityId] || 0);
+                                                    const profitPercent = parseFloat(formData.profit?.[activeGoldPurityId] || 0);
+                                                    const gstPercent = parseFloat(formData.gst?.[activeGoldPurityId] || 0);
 
-                        </div>
+                                                    // Profit Amount = Selling * Profit %
+                                                    const profitAmount = (selling * profitPercent) / 100;
 
+                                                    // Total including profit
+                                                    const totalProfitAmount = selling + profitAmount;
 
+                                                    // GST Amount = Profit * GST %
+                                                    const gstAmount = totalProfitAmount * (gstPercent / 100);
 
-                        {/* Image Upload */}
-                        <div className="col-lg-6 col-md-6 col-12 mb-2">
-                            <label htmlFor="image" className="form-label">
-                                Images :
-                            </label>
-                            <input
-                                type="file"
-                                name="images"
-                                id="images"
-                                className="form-control"
-                                onChange={handleChange}
-                                accept="image/jpeg,image/jpg,image/png,image/gif"
-                                multiple
-                                ref={fileInputRef}
-                            />
+                                                    // Total Amount = Selling + Profit + GST
+                                                    const finalTotal = totalProfitAmount + gstAmount;
 
-                            {/* ✅ Show All Images Below */}
-                            {previews.length > 0 && (
-                                <div className="d-flex flex-wrap gap-2 mt-2">
-                                    {previews.map((src, idx) => (
-                                        <div key={idx} className="position-relative">
-                                            <img
-                                                src={src}
-                                                alt={`Preview ${idx + 1}`}
-                                                className="img-thumbnail img-fluid"
-                                                style={{
-                                                    width: 80,
-                                                    height: 80,
-                                                    objectFit: "cover",
-                                                }}
-                                            />
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                                                onClick={() => handleRemoveImage(idx)}
-                                                style={{
-                                                    borderRadius: "50%",
-                                                    width: "20px",
-                                                    height: "20px",
-                                                    padding: 0,
-                                                    lineHeight: "15px",
-                                                    textAlign: "center"
-                                                }}
-                                                aria-label="Remove image"
-                                            >
-                                                ×
-                                            </button>
+                                                    return (
+                                                        <>
+                                                            <h5 className='d-flex justify-content-between mb-3'>
+                                                                <strong>Profit Amount (Selling Price + Profit Margin): </strong>
+                                                                {totalProfitAmount.toFixed(2)}
+                                                            </h5>
+
+                                                            <h5 className='d-flex justify-content-between mb-4'>
+                                                                <strong>Gst Amount (Profit Amount * GST): </strong>
+                                                                {gstAmount.toFixed(2)}
+                                                            </h5>
+
+                                                            <h5 className='d-flex justify-content-between mb-2'>
+                                                                <strong>Total Amount (Profit Amount + GST): </strong>
+                                                                {finalTotal.toFixed(2)}
+                                                            </h5>
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             )}
                         </div>
 
+                        <p className='mt-5'>4. Product Images & Media</p>
+
+                        <div className="col-12 mb-2">
+                            <label htmlFor="images" className="form-label">
+                                Enter Img and Video According to Purity:
+                            </label>
+
+                            {/* Show selected goldPurity with price input */}
+                            {formData.metalId?.length > 0 && (
+                                <div className="mt-2">
+                                    <div className="d-flex flex-wrap gap-2 mb-2">
+                                        {formData.metalId.map((id) => {
+                                            const metalName =
+                                                metals.find((m) => m.id.toString() === id.toString())?.name || id;
+
+                                            const isActive = activemetalId === id;
+
+                                            return (
+                                                <span
+                                                    key={id}
+                                                    className={`badge p-2 fs-6 ${isActive ? "bg-success" : "bg-primary"}`}
+                                                    style={{ cursor: "pointer", minWidth: "60px", textAlign: "center" }}
+                                                    onClick={() => setActivemetalId(isActive ? null : id)}
+                                                >
+                                                    {metalName}
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Inputs for active tab, full screen width */}
+                                    {activemetalId && (
+                                        <div className="row">
+                                            {/* Image Upload */}
+                                            <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                                <label htmlFor="image" className="form-label">Images :</label>
+                                                <input
+                                                    type="file"
+                                                    name="images"
+                                                    id="images"
+                                                    className="form-control"
+                                                    onChange={handleChange}
+                                                    accept="image/jpeg,image/jpg,image/png,image/gif"
+                                                    multiple
+                                                // required
+                                                />
+
+                                                {previewsByMetal[activemetalId]?.images?.length > 0 && (
+                                                    <div className="d-flex flex-wrap gap-2 mt-2">
+                                                        {previewsByMetal[activemetalId].images.map((src, idx) => (
+                                                            <div key={idx} className="position-relative">
+                                                                <img
+                                                                    src={src}
+                                                                    alt={`Preview ${idx + 1}`}
+                                                                    className="img-thumbnail img-fluid"
+                                                                    style={{ width: 80, height: 80, objectFit: "cover" }}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                                                                    onClick={() => handleRemoveImage(idx)}
+                                                                    style={{
+                                                                        borderRadius: "50%",
+                                                                        width: "20px",
+                                                                        height: "20px",
+                                                                        padding: 0,
+                                                                        lineHeight: "15px",
+                                                                        textAlign: "center"
+                                                                    }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Video Upload */}
+                                            <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                                <label htmlFor="video" className="form-label">Upload Video:</label>
+                                                <input
+                                                    type="file"
+                                                    accept="video/mp4,video/webm,video/ogg"
+                                                    id="video"
+                                                    className="form-control"
+                                                    onChange={handleVideoChange}
+                                                />
+
+                                                {previewsByMetal[activemetalId]?.videoPreview && (
+                                                    <div className="mt-3">
+                                                        <video
+                                                            width="320"
+                                                            height="180"
+                                                            controls
+                                                            src={previewsByMetal[activemetalId].videoPreview}
+                                                            className="rounded border"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <p className='mt-5'>5. Product Description & Details</p>
                         {/* Short Description */}
-                        <div className="col-lg-6 col-md-6 col-12 mb-2">
+                        <div className="col-12 mb-2">
                             <label htmlFor="shortDescription" className="form-label">
                                 Short Description :
                             </label>
@@ -801,62 +1022,22 @@ const AddProducts = () => {
                             />
                         </div>
 
-                        {/* Estimated Time */}
-                        <div className="col-lg-6 col-md-6 col-12 mb-2">
-                            <label htmlFor="estimatedTime" className="form-label">
-                                Estimated Time :
+                        {/* Description */}
+                        <div className="col-12 mb-2">
+                            <label htmlFor="description" className="form-label">
+                                Description :
                             </label>
-                            <input
-                                type="text"
-                                name="estimatedTime"
-                                id="estimatedTime"
-                                className="form-control"
-                                placeholder="Enter Estimated Time "
-                                autoComplete="off"
-                                value={formData.estimatedTime}
-                                onChange={handleInput}
-                                required
-                            />
-                        </div>
-
-                        {/* Original Price */}
-                        <div className="col-lg-6 col-md-6 col-12 mb-2">
-                            <label htmlFor="original_price" className="form-label">
-                                Original Price:
-                            </label>
-                            <input
-                                type="text"
-                                name="original_price"
-                                id="original_price"
-                                className="form-control"
-                                placeholder="Enter Original Price"
-                                autoComplete="off"
-                                value={formData.original_price}
-                                onChange={handleInput}
-                                required
-                            />
-                        </div>
-
-                        {/* Selling Price */}
-                        <div className="col-lg-6 col-md-6 col-12 mb-2">
-                            <label htmlFor="selling_price" className="form-label">
-                                Selling Price:
-                            </label>
-                            <input
-                                type="text"
-                                name="selling_price"
-                                id="selling_price"
-                                className="form-control"
-                                placeholder="Enter Selling Price"
-                                autoComplete="off"
-                                value={formData.selling_price}
-                                onChange={handleInput}
-                                required
+                            <Editor
+                                value={formData.description}
+                                onTextChange={(e) =>
+                                    setFormData({ ...formData, description: e.htmlValue })
+                                }
+                                style={{ height: '320px' }}
                             />
                         </div>
 
                         {/* Product Materials */}
-                        <div className="col-lg-6 col-md-6 col-12 mb-2">
+                        <div className="col-12 mb-2 d-flex flex-column">
                             <label className="form-label">Product Materials :</label>
                             {formData.productMaterials.map((item, index) => (
                                 <div key={index} className="d-flex gap-2 mb-2 align-items-center">
@@ -878,42 +1059,35 @@ const AddProducts = () => {
                                 </div>
                             ))}
 
-
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={addMaterial}
-                            >
-                                Add New
-                            </button>
+                            <div>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={addMaterial}
+                                >
+                                    Add New
+                                </button>
+                            </div>
                         </div>
 
+                        <p className='mt-5'>6. Product Description & Details</p>
 
-
-                        {/* Video Upload */}
-                        <div className="col-lg-6 col-md-6 col-12 mb-2">
-                            <label htmlFor="video" className="form-label">
-                                Upload Video:
+                        {/* Estimated Time */}
+                        <div className="col-12 mb-2">
+                            <label htmlFor="estimatedTime" className="form-label">
+                                Estimated Time :
                             </label>
                             <input
-                                type="file"
-                                accept="video/mp4,video/webm,video/ogg"
-                                id="video"
+                                type="text"
+                                name="estimatedTime"
+                                id="estimatedTime"
                                 className="form-control"
-                                onChange={handleVideoChange}
+                                placeholder="Enter Estimated Time "
+                                autoComplete="off"
+                                value={formData.estimatedTime}
+                                onChange={handleInput}
+                                required
                             />
-
-                            {videoPreview && (
-                                <div className="mt-3">
-                                    <video
-                                        width="320"
-                                        height="180"
-                                        controls
-                                        src={videoPreview}
-                                        className="rounded border"
-                                    />
-                                </div>
-                            )}
                         </div>
 
                         {/* Top Seller Boolean */}
@@ -1072,22 +1246,8 @@ const AddProducts = () => {
                             </div>
                         </div>
 
-                        {/* Description */}
-                        <div className="col-12 mb-2">
-                            <label htmlFor="description" className="form-label">
-                                Description :
-                            </label>
-                            <Editor
-                                value={formData.description}
-                                onTextChange={(e) =>
-                                    setFormData({ ...formData, description: e.htmlValue })
-                                }
-                                style={{ height: '320px' }}
-                            />
-                        </div>
-
                         {/* Submit */}
-                        <div className="text-end">
+                        <div className="text-end mt-3">
                             <button
                                 type="submit"
                                 className={`submit-btn ${loading ? 'btn-loading' : ''}`}

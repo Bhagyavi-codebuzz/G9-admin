@@ -1,5 +1,5 @@
 import { Editor } from 'primereact/editor';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import left from "../../assets/Images/lefticon.png";
 import { loaders } from '../../componet/loader/Loader';
@@ -10,26 +10,35 @@ import { toast } from 'react-toastify';
 const initialState = {
     title: "",
     images: [],
+    metalsData: {},
     description: "",
     stockNumber: "",
     shortDescription: "",
     estimatedTime: "",
-    original_price: "",
-    selling_price: "",
-    productMaterials: [{}],
-    topSelling: "",
-    discounted: "",
-    readyToShip: "",
-    newArrival: ""
+    price: [],
+    original_price: {},
+    selling_price: {},
+    profit: {},
+    gst: {},
+    productMaterials: [],
+    categoryId: '',
+    subCategoryId: '',
+    metalId: [],
+    stoneShapeId: "",
+    diamondCut: "",
+    goldPurityId: [],
+    discounted: 0,
+    readyToShip: 0,
+    topSelling: 0,
+    newArrival: 0
 };
-
 
 const ProductsEdit = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [editProducts, setEditProducts] = useState(location.state?.products || {});
-    const [imageShow, setImageShow] = useState([]);
     const [formData, setFormData] = useState(initialState);
+    console.log("🚀 ~ ProductsEdit ~ formData:", formData)
     const [loader, setLoader] = useState(false);
     const [loading, setLoading] = useState(false);
     const [category, setCategory] = useState([]);
@@ -37,30 +46,44 @@ const ProductsEdit = () => {
     const [metals, setmetals] = useState([]);
     const [stoneShape, setStoneShape] = useState([]);
     const [goldPurity, setGoldPurity] = useState([]);
-    const [videoFile, setVideoFile] = useState(null);
-    const [videoPreview, setVideoPreview] = useState("");
+    const [previewsByMetal, setPreviewsByMetal] = useState({});
+    const [activeGoldPurityId, setActiveGoldPurityId] = useState(null);
+    const [activemetalId, setActivemetalId] = useState(null);
+    const fileInputRef = useRef(null);
 
     // Load product details
     useEffect(() => {
-        let materials = [];
+        if (!editProducts?.id) return;
 
+        // Parse metals from string to array
+        let metalsArray = [];
+        try {
+            if (editProducts.metals) {
+                metalsArray = typeof editProducts.metals === "string"
+                    ? JSON.parse(editProducts.metals)
+                    : editProducts.metals;
+            }
+        } catch (err) {
+            console.error("Error parsing metals:", err);
+            metalsArray = [];
+        }
+
+        // Parse product materials
+        let materials = [];
         if (editProducts?.productMaterials) {
             try {
-                // If it's a string, parse it
                 const parsed = typeof editProducts.productMaterials === "string"
                     ? JSON.parse(editProducts.productMaterials)
                     : editProducts.productMaterials;
 
                 if (Array.isArray(parsed)) {
-                    // Case: already array
                     materials = parsed.map(item => ({
-                        key: item.key || item.name || "",
+                        name: item.name || item.key || "",
                         value: item.value || ""
                     }));
                 } else if (typeof parsed === "object" && parsed !== null) {
-                    // Case: object (convert to array of key-value pairs)
                     materials = Object.entries(parsed).map(([k, v]) => ({
-                        key: k,
+                        name: k,
                         value: v
                     }));
                 }
@@ -70,100 +93,279 @@ const ProductsEdit = () => {
             }
         }
 
+        // Parse purity data and set price fields
+        const purityData = editProducts.purity || [];
+        const original_price = {};
+        const selling_price = {};
+        const profit = {};
+        const gst = {};
+
+        purityData.forEach(item => {
+            if (item.value) {
+                original_price[item.value] = item.original_price || "";
+                selling_price[item.value] = item.selling_price || "";
+                profit[item.value] = item.profit ? parseFloat(item.profit) : "";
+                gst[item.value] = item.gst ? parseFloat(item.gst) : "";
+            }
+        });
+
+        // Parse media data
+        const metalsData = {};
+        const previewsData = {};
+
+        if (editProducts.media && Array.isArray(editProducts.media)) {
+            editProducts.media.forEach(mediaItem => {
+                if (mediaItem.id) {
+                    const metalId = mediaItem.id.toString();
+
+                    // Set images - mark them as existing (not new files)
+                    if (mediaItem.images && Array.isArray(mediaItem.images)) {
+                        metalsData[metalId] = {
+                            ...metalsData[metalId],
+                            images: mediaItem.images.map(img => ({
+                                url: img,
+                                isExisting: true // Mark as existing image
+                            }))
+                        };
+
+                        previewsData[metalId] = {
+                            ...previewsData[metalId],
+                            images: mediaItem.images
+                        };
+                    }
+
+                    // Set videos - mark as existing
+                    if (mediaItem.videos && Array.isArray(mediaItem.videos) && mediaItem.videos.length > 0) {
+                        metalsData[metalId] = {
+                            ...metalsData[metalId],
+                            video: {
+                                url: mediaItem.videos[0],
+                                isExisting: true
+                            }
+                        };
+
+                        previewsData[metalId] = {
+                            ...previewsData[metalId],
+                            videoPreview: mediaItem.videos[0]
+                        };
+                    }
+                }
+            });
+        }
+
         setFormData({
             title: editProducts?.title || "",
             description: editProducts?.description || "",
             stockNumber: editProducts?.stockNumber || "",
             shortDescription: editProducts?.shortDescription || "",
             estimatedTime: editProducts?.estimatedTime || "",
-            original_price: editProducts?.original_price || "",
-            selling_price: editProducts?.selling_price || "",
-            productMaterials: materials, // ✅ always flat array of { key, value }
+            original_price,
+            selling_price,
+            profit,
+            gst,
+            productMaterials: materials,
             categoryId: editProducts?.categoryId || "",
             subCategoryId: editProducts?.subCategoryId || "",
-            metalId: editProducts?.metalId || "",
+            metalId: metalsArray,
             stoneShapeId: editProducts?.stoneShapeId || "",
-            goldPurityId: editProducts?.goldPurityId || "",
+            diamondCut: editProducts?.diamondCut || "",
+            goldPurityId: purityData.map(p => p.value?.toString()) || [],
+            purity: purityData,
             topSelling: editProducts?.topSelling === true || editProducts?.topSelling === 1 ? 1 : 0,
             discounted: editProducts?.discounted === true || editProducts?.discounted === 1 ? 1 : 0,
             readyToShip: editProducts?.readyToShip === true || editProducts?.readyToShip === 1 ? 1 : 0,
             newArrival: editProducts?.newArrival === true || editProducts?.newArrival === 1 ? 1 : 0,
-            images: editProducts?.images || [],
-            video: editProducts?.video || null,
+            metalsData
         });
 
-        // Images
-        if (Array.isArray(editProducts?.images) && editProducts.images.length > 0) {
-            const formattedImages = editProducts.images.map(img =>
-                typeof img === "string" && img.startsWith("http")
-                    ? img
-                    : `${process.env.REACT_APP_BASE_URL}/uploads/${img}`
-            );
-            setImageShow(formattedImages);
-        } else if (typeof editProducts?.images === "string") {
-            const isFullUrl = editProducts.images.startsWith("http");
-            setImageShow([
-                isFullUrl
-                    ? editProducts.images
-                    : `${process.env.REACT_APP_BASE_URL}/uploads/${editProducts.images}`
-            ]);
-        } else {
-            setImageShow([]);
-        }
+        setPreviewsByMetal(previewsData);
 
-        // Video
-        if (editProducts?.video) {
-            const videoUrl =
-                editProducts.video.startsWith("http")
-                    ? editProducts.video
-                    : `${process.env.REACT_APP_BASE_URL}/uploads/${editProducts.video}`;
-            setVideoPreview(videoUrl);
-        }
     }, [editProducts]);
 
-
-
+    // Handle video change for specific metal
     const handleVideoChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setVideoFile(file);
-            setFormData((prev) => ({
+        if (!file || !activemetalId) return;
+
+        setFormData(prev => ({
+            ...prev,
+            metalsData: {
+                ...prev.metalsData,
+                [activemetalId]: {
+                    ...(prev.metalsData[activemetalId] || {}),
+                    video: {
+                        file,
+                        isNew: true
+                    }
+                }
+            }
+        }));
+
+        setPreviewsByMetal(prev => ({
+            ...prev,
+            [activemetalId]: {
+                ...(prev[activemetalId] || {}),
+                videoPreview: URL.createObjectURL(file)
+            }
+        }));
+    };
+
+    // Handle image change for specific metal
+    const handleChange = (e) => {
+        const { name, files } = e.target;
+        if (!activemetalId) return;
+
+        if (files && name === "images") {
+            const list = Array.from(files);
+
+            setFormData(prev => ({
                 ...prev,
-                video: file,  // save file in formData
+                metalsData: {
+                    ...prev.metalsData,
+                    [activemetalId]: {
+                        ...(prev.metalsData[activemetalId] || {}),
+                        images: [
+                            ...(prev.metalsData[activemetalId]?.images || []),
+                            ...list.map(file => ({
+                                file, // Store the file object
+                                isNew: true // Mark as new file
+                            }))
+                        ]
+                    }
+                }
             }));
-            setVideoPreview(URL.createObjectURL(file));
+
+            const urls = list.map(f => URL.createObjectURL(f));
+            setPreviewsByMetal(prev => ({
+                ...prev,
+                [activemetalId]: {
+                    ...(prev[activemetalId] || {}),
+                    images: [
+                        ...(prev[activemetalId]?.images || []),
+                        ...urls
+                    ]
+                }
+            }));
+
+            e.target.value = "";
         }
     };
 
-    // Remove video
-    const handleRemoveVideo = () => {
-        setVideoFile(null);
-        setFormData((prev) => ({
+    const handleRemoveImage = async (idx) => {
+        if (!activemetalId) return;
+
+        const imageToRemove = previewsByMetal[activemetalId]?.images?.[idx];
+        const metalData = formData.metalsData[activemetalId];
+        const imageInFormData = metalData?.images?.[idx];
+
+        // If it's an existing image (has URL), call delete API
+        if (imageToRemove && typeof imageToRemove === 'string' && imageToRemove.startsWith('http')) {
+            try {
+                const imageName = imageToRemove.split('/').pop();
+                const deleteRes = await Axios.delete(apiendpoints.deleteProductImage, {
+                    data: {
+                        productId: editProducts.id,
+                        metalId: activemetalId,
+                        image: imageName
+                    },
+                    ...authorizationHeaders()
+                });
+
+                if (deleteRes.data?.status) {
+                    toast.success("Image deleted successfully");
+                } else {
+                    toast.error("Failed to delete image");
+                    return; // Don't remove from state if API fails
+                }
+            } catch (err) {
+                console.error("Error deleting image:", err);
+                toast.error("Error deleting image");
+                return;
+            }
+        }
+
+        // Remove from form data
+        setFormData(prev => ({
             ...prev,
-            video: null,
+            metalsData: {
+                ...prev.metalsData,
+                [activemetalId]: {
+                    ...prev.metalsData[activemetalId],
+                    images: prev.metalsData[activemetalId].images.filter((_, i) => i !== idx)
+                }
+            }
         }));
-        setVideoPreview("");
+
+        // Remove from previews
+        setPreviewsByMetal(prev => ({
+            ...prev,
+            [activemetalId]: {
+                ...prev[activemetalId],
+                images: prev[activemetalId].images.filter((_, i) => i !== idx)
+            }
+        }));
     };
 
-    // Remove image
-    const handleRemoveImage = (index) => {
-        setImageShow((prev) => prev.filter((_, i) => i !== index));
-        setFormData((prev) => ({
+    const handleRemoveVideo = async () => {
+        if (!activemetalId) return;
+
+        const videoToRemove = previewsByMetal[activemetalId]?.videoPreview;
+
+        // If it's an existing video (has URL), call delete API
+        if (videoToRemove && typeof videoToRemove === 'string' && videoToRemove.startsWith('http')) {
+            try {
+                const videoName = videoToRemove.split('/').pop();
+                const deleteRes = await Axios.delete(apiendpoints.deleteProductImage, {
+                    data: {
+                        productId: editProducts.id,
+                        metalId: activemetalId,
+                        video: videoName
+                    },
+                    ...authorizationHeaders()
+                });
+
+                if (deleteRes.data?.status) {
+                    toast.success("Video deleted successfully");
+                } else {
+                    toast.error("Failed to delete video");
+                    return;
+                }
+            } catch (err) {
+                console.error("Error deleting video:", err);
+                toast.error("Error deleting video");
+                return;
+            }
+        }
+
+        setFormData(prev => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index),
+            metalsData: {
+                ...prev.metalsData,
+                [activemetalId]: {
+                    ...prev.metalsData[activemetalId],
+                    video: null
+                }
+            }
+        }));
+
+        setPreviewsByMetal(prev => ({
+            ...prev,
+            [activemetalId]: {
+                ...prev[activemetalId],
+                videoPreview: ""
+            }
         }));
     };
 
-    // Update a specific key or value
+    // Update product materials
     const handleMaterialChange = (index, field, value) => {
-        setFormData((prev) => {
+        setFormData(prev => {
             const materials = [...prev.productMaterials];
             materials[index][field] = value;
             return { ...prev, productMaterials: materials };
         });
     };
 
-    // Remove a material
     const removeMaterial = (index) => {
         setFormData((prev) => {
             const materials = [...prev.productMaterials];
@@ -172,173 +374,170 @@ const ProductsEdit = () => {
         });
     };
 
-    // Add a new empty key-value pair
     const addMaterial = () => {
         setFormData((prev) => ({
             ...prev,
-            productMaterials: [...prev.productMaterials, { key: "", value: "" }]
+            productMaterials: [...prev.productMaterials, { name: "", value: "" }]
         }));
     };
 
-    const fetchCategory = async () => {
+    // Handle input changes
+    const handleInput = (e) => {
+        const { name, value } = e.target;
 
+        if (name === "metalId" || name === "goldPurityId") {
+            setFormData((prev) => {
+                const currentValues = prev[name] || [];
+                if (currentValues.includes(value)) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    [name]: [...currentValues, value],
+                };
+            });
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        }
+    };
+
+    // Fetch dropdown data
+    const fetchCategory = async () => {
         try {
             const res = await Axios.get(apiendpoints.category, authorizationHeaders());
-
             if (res.data?.status) {
                 setCategory(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
-        } finally {
-            // setLoader(false);
+            console.error("Error fetching categories:", err);
         }
     }
 
     const fetchSubCategory = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.subCategory}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setSubcategory(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
-        } finally {
+            console.error("Error fetching subcategories:", err);
         }
     }
 
     const fetchMetals = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.metal}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setmetals(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
-        } finally {
+            console.error("Error fetching metals:", err);
         }
     }
 
     const fetchStoneShape = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.StoneShape}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setStoneShape(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
-        } finally {
+            console.error("Error fetching stone shapes:", err);
         }
     }
 
     const fetchgoldPurity = async () => {
-
         try {
             const res = await Axios.get(`${apiendpoints.goldPurity}`, authorizationHeaders());
-
             if (res.data?.status) {
                 setGoldPurity(res.data?.data || []);
-            }
-            else {
+            } else {
                 toast.error(res.data?.message);
             }
-
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            }
-            else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
-        } finally {
+            console.error("Error fetching gold purity:", err);
         }
     }
+
     useEffect(() => {
         fetchCategory();
         fetchSubCategory();
         fetchMetals();
         fetchStoneShape();
         fetchgoldPurity();
-    }, [])
+    }, []);
 
-    // Handle input changes
-    const handleChange = (e) => {
-        const { name, value, files } = e.target;
+    // Update purity calculations when dependencies change
+    // Update the useEffect that calculates purity
+    useEffect(() => {
+        if (!formData.goldPurityId?.length || !goldPurity.length) return;
 
-        if (files && files.length > 0) {
-            const newFiles = Array.from(files);
+        const purityArray = formData.goldPurityId.map((id) => {
+            // Find the gold purity name - ensure we're comparing the same types
+            const goldPurityItem = goldPurity.find((m) =>
+                m.id.toString() === id.toString() ||
+                m.id === Number(id)
+            );
+            const name = goldPurityItem?.name || "";
 
-            setFormData((prev) => ({
-                ...prev,
-                [name]: [...(prev[name] || []), ...newFiles],
-            }));
+            const originalPrice = parseFloat(formData.original_price?.[id] || 0);
+            const selling = parseFloat(formData.selling_price?.[id] || 0);
+            const profitValue = parseFloat(formData.profit?.[id] || 0);
+            const gstValue = parseFloat(formData.gst?.[id] || 0);
 
-            const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
-            setImageShow((prev) => [...prev, ...newPreviews]);
-        } else {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value.trimStart(),
-            }));
-        }
-    };
+            // Calculations
+            const profitsellingAmount = (selling * profitValue) / 100;
+            const profitoriginalAmount = (originalPrice * profitValue) / 100;
+            const profitsellingprice = selling + profitsellingAmount;
+            const profitoriginalprice = originalPrice + profitoriginalAmount;
+            const totalProfitAmount = selling + profitsellingAmount;
+            const gstAmount = (totalProfitAmount * gstValue) / 100;
+            const finalTotal = totalProfitAmount + gstAmount;
+
+            return {
+                value: Number(id),
+                name, // This will now have the proper name
+                original_price: originalPrice.toFixed(2) || 0,
+                selling_price: selling.toFixed(2),
+                profit: profitValue + "%",
+                profitoriginalAmount: profitoriginalAmount.toFixed(2),
+                profitsellingAmount: profitsellingAmount.toFixed(2),
+                profitoriginalprice: profitoriginalprice.toFixed(2) || 0,
+                profitsellingprice: profitsellingprice.toFixed(2),
+                gst: gstValue + "%",
+                gstAmount: gstAmount.toFixed(2),
+                gstPrice: finalTotal.toFixed(2),
+            };
+        });
+
+        setFormData(prev => ({
+            ...prev,
+            purity: purityArray
+        }));
+
+    }, [formData.goldPurityId, formData.original_price, formData.selling_price, formData.profit, formData.gst, goldPurity]);
+    const filteredSubcategories = subcategory.filter(
+        itm => itm.categoryId === Number(formData?.categoryId)
+    );
+
+    const sortedGoldPurity = goldPurity
+        ?.slice()
+        .sort((a, b) => {
+            const numA = parseInt(a.name.replace(/[^0-9]/g, ""), 10);
+            const numB = parseInt(b.name.replace(/[^0-9]/g, ""), 10);
+            return numA - numB;
+        });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -346,10 +545,10 @@ const ProductsEdit = () => {
 
         const requiredFields = [
             "title", "description", "stockNumber", "estimatedTime",
-            "original_price", "selling_price", "productMaterials"
+            "categoryId", "subCategoryId", "metalId", "stoneShapeId", "goldPurityId", "shortDescription"
         ];
 
-        // ✅ Required fields validation
+        // Validation
         for (const field of requiredFields) {
             if (!formData[field] ||
                 (Array.isArray(formData[field]) && formData[field].length === 0) ||
@@ -360,20 +559,19 @@ const ProductsEdit = () => {
             }
         }
 
-        // ✅ Product materials validation
-        if (formData.productMaterials) {
-            const validMaterials = formData.productMaterials.filter(
-                (m) => m.key?.trim() && m.value?.trim()
-            );
-            if (validMaterials.length === 0) {
-                toast.error("At least one valid product material (key & value) is required!");
-                return;
-            }
-        }
+        // if (formData.productMaterials) {
+        //     const validMaterials = formData.productMaterials.filter(
+        //         (m) => m.name?.trim() && m.value?.trim()
+        //     );
+        //     if (validMaterials.length === 0) {
+        //         toast.error("At least one valid product material (name & value) is required!");
+        //         return;
+        //     }
+        // }
 
-        // ✅ Images validation
-        if (!formData.images || formData.images.length < 2) {
-            toast.error("At least two images are required!");
+        // Gold purity validation
+        if (!formData.goldPurityId || formData.goldPurityId.length === 0) {
+            toast.error("At least one gold purity must be selected!");
             return;
         }
 
@@ -381,32 +579,35 @@ const ProductsEdit = () => {
         try {
             const form = new FormData();
 
-            Object.keys(formData).forEach((key) => {
-                if (key === "images") {
-                    formData.images.forEach((file) => form.append("images", file));
-                } else if (key === "productMaterials") {
-                    const materialsObj = formData.productMaterials
-                        .filter((m) => m.key?.trim() && m.value?.trim())
-                        .reduce((acc, m) => {
-                            acc[m.key.trim()] = m.value.trim();
-                            return acc;
-                        }, {});
-                    form.append("productMaterials", JSON.stringify(materialsObj));
-                } else if (
-                    ["topSelling", "discounted", "readyToShip", "newArrival"].includes(key)
-                ) {
-                    // Convert 1 → "true", 0 → "false"
-                    form.append(key, formData[key] === 1 ? "true" : "false");
-                } else {
-                    form.append(key, formData[key]);
-                }
-            });
+            // Append simple fields
+            form.append("title", formData.title);
+            form.append("estimatedTime", formData.estimatedTime);
+            form.append("description", formData.description);
+            form.append("stockNumber", formData.stockNumber);
+            form.append("categoryId", formData.categoryId);
+            form.append("subCategoryId", formData.subCategoryId);
+            form.append("metals", JSON.stringify(formData.metalId));
+            form.append("stoneShapeId", formData.stoneShapeId);
+            form.append("shortDescription", formData.shortDescription);
+            form.append("diamondCut", formData.diamondCut);
+            form.append("discounted", formData.discounted === 1 ? "true" : "false");
+            form.append("readyToShip", formData.readyToShip === 1 ? "true" : "false");
+            form.append("topSelling", formData.topSelling === 1 ? "true" : "false");
+            form.append("newArrival", formData.newArrival === 1 ? "true" : "false");
 
+            // Append product materials
+            const materialsObj = formData.productMaterials
+                .filter(m => m.name?.trim() && m.value?.trim())
+                .reduce((acc, m) => {
+                    acc[m.name.trim()] = m.value.trim();
+                    return acc;
+                }, {});
+            form.append("productMaterials", JSON.stringify(materialsObj));
 
-
-
-
-            if (videoFile) form.append("video", videoFile);
+            // Append purity array
+            if (formData.purity && formData.purity.length > 0) {
+                form.append("purity", JSON.stringify(formData.purity));
+            }
 
             const res = await Axios.post(
                 apiendpoints.editProducts.replace(":id", editProducts.id),
@@ -416,7 +617,58 @@ const ProductsEdit = () => {
 
             if (res.data?.status) {
                 toast.success(res.data?.message);
-                setFormData(initialState);
+
+                // Update media for each metal ONLY if there are new files
+                for (const metalId of Object.keys(formData.metalsData)) {
+                    const metalData = formData.metalsData[metalId];
+
+                    // Check if there are any new files (images or video)
+                    const hasNewImages = metalData?.images?.some(img => img.isNew);
+                    const hasNewVideo = metalData?.video?.isNew;
+
+                    if (hasNewImages || hasNewVideo) {
+                        const mediaForm = new FormData();
+                        mediaForm.append("stockNumber", formData.stockNumber);
+                        mediaForm.append("metalId", metalId);
+
+                        // Append only NEW images (File objects)
+                        if (metalData.images?.length > 0) {
+                            metalData.images.forEach((image) => {
+                                if (image.isNew && image.file) {
+                                    mediaForm.append("images", image.file);
+                                }
+                            });
+                        }
+
+                        // Append only NEW video (File object)
+                        if (metalData.video?.isNew && metalData.video.file) {
+                            mediaForm.append("video", metalData.video.file);
+                        }
+
+                        // Only call API if there are actual files to upload
+                        if (mediaForm.has('images') || mediaForm.has('video')) {
+                            try {
+                                const mediaRes = await Axios.post(
+                                    apiendpoints.addProductMedia,
+                                    mediaForm,
+                                    {
+                                        ...authorizationHeadersImage(),
+                                        headers: { "Content-Type": "multipart/form-data" }
+                                    }
+                                );
+
+                                if (mediaRes.data?.status) {
+                                    toast.success(`Media updated for metal ID ${metalId}`);
+                                } else {
+                                    toast.error(`Failed to update media for metal ID ${metalId}`);
+                                }
+                            } catch (mediaErr) {
+                                console.error(`Error updating media for metal ID ${metalId}:`, mediaErr);
+                            }
+                        }
+                    }
+                }
+
                 navigate("/admin/products");
             } else {
                 toast.error(res.data?.message);
@@ -433,10 +685,9 @@ const ProductsEdit = () => {
         }
     };
 
-
     return (
         <>
-            <section className="categorylist-section mt-4 mt-lg-4 mt-xl-5">
+            <section className="categorylist-section product mt-4 mt-lg-4 mt-xl-5">
                 <div className="edit-user">
                     <div className="row">
                         <div className="d-flex align-items-center justify-content-between gap-3">
@@ -448,7 +699,6 @@ const ProductsEdit = () => {
                             </h2>
                         </div>
 
-                        {/* Loader */}
                         {loader ? (
                             <div className="d-flex justify-content-center align-items-center py-5 w-100">
                                 <div className="spinner-border text-black" role="status">
@@ -456,73 +706,8 @@ const ProductsEdit = () => {
                                 </div>
                             </div>
                         ) : (
-                            <form className="row g-3" onSubmit={handleSubmit}>
-                                {/* Images */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="images" className="form-label">
-                                        Images :
-                                    </label>
-                                    <input
-                                        type="file"
-                                        name="images"
-                                        id="images"
-                                        className="form-control"
-                                        onChange={handleChange}
-                                        accept="image/jpeg,image/jpg,image/png,image/gif"
-                                        multiple
-                                    />
-
-                                    {/* Show all images with close button */}
-                                    {Array.isArray(imageShow) && imageShow.length > 0 && (
-                                        <div className="mb-2 mt-2 d-flex flex-wrap gap-3">
-                                            {imageShow.map((img, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="position-relative"
-                                                    style={{ display: "inline-block" }}
-                                                >
-                                                    <img
-                                                        src={img}
-                                                        alt={`preview-${i}`}
-                                                        className="img-thumbnail img-fluid"
-                                                        style={{ maxWidth: "80px", width: '100%', height: "100%", maxHeight: "80px" }}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveImage(i)}
-                                                        className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                                                        style={{
-                                                            borderRadius: "50%",
-                                                            width: "20px",
-                                                            height: "20px",
-                                                            padding: 0,
-                                                            lineHeight: "15px",
-                                                            textAlign: "center"
-                                                        }}
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Title */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="title" className="form-label">Title :</label>
-                                    <input
-                                        type="text"
-                                        name="title"
-                                        id="title"
-                                        className="form-control"
-                                        placeholder="Enter Title"
-                                        autoComplete='off'
-                                        value={formData.title}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
+                            <form className="row g-3 gx-4" onSubmit={handleSubmit}>
+                                <p>1. Basic Product Information</p>
 
                                 {/* Stock Number */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
@@ -534,122 +719,30 @@ const ProductsEdit = () => {
                                         name="stockNumber"
                                         id="stockNumber"
                                         className="form-control"
-                                        placeholder="Enter stock number"
+                                        placeholder="Enter Stock Number"
                                         autoComplete="off"
                                         value={formData.stockNumber}
-                                        onChange={handleChange}
+                                        onChange={handleInput}
                                         required
                                     />
                                 </div>
 
-                                {/* Short Description */}
+                                {/* Title */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="shortDescription " className="form-label">
-                                        Short Description :
+                                    <label htmlFor="title" className="form-label">
+                                        Name :
                                     </label>
                                     <input
                                         type="text"
-                                        name="shortDescription"
-                                        id="shortDescription"
+                                        name="title"
+                                        id="title"
                                         className="form-control"
-                                        placeholder="Enter Short Description"
+                                        placeholder="Enter Name"
                                         autoComplete="off"
-                                        value={formData.shortDescription}
-                                        onChange={handleChange}
+                                        value={formData.title}
+                                        onChange={handleInput}
                                         required
                                     />
-                                </div>
-
-                                {/* Estimated Time */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="estimatedTime" className="form-label">
-                                        Estimated Time :
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="estimatedTime"
-                                        id="estimatedTime"
-                                        className="form-control"
-                                        placeholder="Enter Estimated Time "
-                                        autoComplete="off"
-                                        value={formData.estimatedTime}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-
-                                {/* Original Price */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="original_price" className="form-label">
-                                        Original Price:
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="original_price"
-                                        id="original_price"
-                                        className="form-control"
-                                        placeholder="Enter original price"
-                                        autoComplete="off"
-                                        value={formData.original_price}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-
-                                {/* Selling Price */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="selling_price" className="form-label">
-                                        Selling Price:
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="selling_price"
-                                        id="selling_price"
-                                        className="form-control"
-                                        placeholder="Enter selling price"
-                                        autoComplete="off"
-                                        value={formData.selling_price}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-
-                                {/* Product Materials */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label className="form-label">Product Materials :</label>
-                                    {formData.productMaterials.map((item, index) => (
-                                        <div key={index} className="d-flex gap-2 mb-2 align-items-center">
-                                            <input
-                                                type="text"
-                                                placeholder="Key"
-                                                className="form-control"
-                                                value={item.key}
-                                                onChange={(e) => handleMaterialChange(index, "key", e.target.value)}
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Value"
-                                                className="form-control"
-                                                value={item.value}
-                                                onChange={(e) => handleMaterialChange(index, "value", e.target.value)}
-                                            />
-                                            <button
-                                                type="button"
-                                                className="btn btn-danger"
-                                                onClick={() => removeMaterial(index)}
-                                            >
-                                                Clear
-                                            </button>
-                                        </div>
-                                    ))}
-
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary"
-                                        onClick={addMaterial}
-                                    >
-                                        Add New
-                                    </button>
                                 </div>
 
                                 {/* category Select */}
@@ -662,9 +755,8 @@ const ProductsEdit = () => {
                                         id="categoryId"
                                         className="form-select"
                                         value={formData.categoryId || ""}
-                                        onChange={handleChange}
+                                        onChange={handleInput}
                                         required
-                                        disabled
                                     >
                                         <option value="">-- Select Category --</option>
                                         {category?.map((item) => (
@@ -685,12 +777,12 @@ const ProductsEdit = () => {
                                         id="subCategoryId"
                                         className="form-select"
                                         value={formData.subCategoryId || ""}
-                                        onChange={handleChange}
+                                        onChange={handleInput}
+                                        disabled={filteredSubcategories.length === 0}
                                         required
-                                        disabled
                                     >
                                         <option value="">-- Select Sub Category --</option>
-                                        {subcategory?.map((item) => (
+                                        {filteredSubcategories?.map((item) => (
                                             <option key={item.id} value={item.id}>
                                                 {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
                                             </option>
@@ -698,7 +790,9 @@ const ProductsEdit = () => {
                                     </select>
                                 </div>
 
-                                {/* Metals Select */}
+                                <p className='mt-5'>2. Jewellery Specifications</p>
+
+                                {/* metal select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="metalId" className="form-label">
                                         Select Metals:
@@ -707,18 +801,94 @@ const ProductsEdit = () => {
                                         name="metalId"
                                         id="metalId"
                                         className="form-select"
-                                        value={formData.metalId || ""}
-                                        onChange={handleChange}
-                                        required
-                                        disabled
+                                        onChange={handleInput}
+                                    // required
                                     >
-                                        <option value="">-- Select Metals --</option>
+                                        <option>-- Select Metals --</option>
                                         {metals?.map((item) => (
                                             <option key={item.id} value={item.id}>
                                                 {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
                                             </option>
                                         ))}
                                     </select>
+
+                                    {/* Show selected metals */}
+                                    {formData.metalId?.length > 0 && (
+                                        <div className="mt-2">
+                                            {formData.metalId.map((id) => {
+                                                const metalName = metals.find((m) => m.id.toString() === id)?.name;
+                                                return (
+                                                    <span key={id} className="badge bg-primary p-2 fs-6 me-2">
+                                                        {metalName}
+                                                        <button
+                                                            type="button"
+                                                            className="btn-close btn-close-white ms-2"
+                                                            style={{ fontSize: '10px' }}
+                                                            onClick={() =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    metalId: prev.metalId.filter((mid) => mid !== id),
+                                                                }))
+                                                            }
+                                                        ></button>
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Gold Purity Select */}
+                                <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                    <label htmlFor="goldPurityId" className="form-label">
+                                        Select Purity:
+                                    </label>
+                                    <select
+                                        name="goldPurityId"
+                                        id="goldPurityId"
+                                        className="form-select"
+                                        onChange={handleInput}
+                                    // required
+                                    >
+                                        <option value="">-- Select Purity --</option>
+                                        {sortedGoldPurity?.map((item) => (
+                                            <option key={item.id} value={item.id}>
+                                                {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {/* Show selected goldPurity */}
+                                    {formData.goldPurityId?.length > 0 && (
+                                        <div className="mt-2">
+                                            {formData.goldPurityId.map((id) => {
+                                                const goldPurityName = goldPurity.find(
+                                                    (m) => m.id.toString() === id
+                                                )?.name;
+                                                return (
+                                                    <span
+                                                        key={id}
+                                                        className="badge bg-primary p-2 fs-6 me-2"
+                                                    >
+                                                        {goldPurityName}
+                                                        <button
+                                                            type="button"
+                                                            className="btn-close btn-close-white ms-2"
+                                                            style={{ fontSize: "10px" }}
+                                                            onClick={() =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    goldPurityId: prev.goldPurityId.filter(
+                                                                        (mid) => mid !== id
+                                                                    ),
+                                                                }))
+                                                            }
+                                                        ></button>
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* stoneShape Select */}
@@ -731,9 +901,8 @@ const ProductsEdit = () => {
                                         id="stoneShapeId"
                                         className="form-select"
                                         value={formData.stoneShapeId || ""}
-                                        onChange={handleChange}
+                                        onChange={handleInput}
                                         required
-                                        disabled
                                     >
                                         <option value="">-- Select Stone Shape --</option>
                                         {stoneShape?.map((item) => (
@@ -744,83 +913,379 @@ const ProductsEdit = () => {
                                     </select>
                                 </div>
 
-                                {/* Gold Purity Select */}
+                                {/* Diamond cut Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="goldPurityId" className="form-label">
-                                        Select Gold Purity:
+                                    <label htmlFor="diamondCut" className="form-label">
+                                        Select Diamond Cut:
                                     </label>
                                     <select
-                                        name="goldPurityId"
-                                        id="goldPurityId"
+                                        name="diamondCut"
+                                        id="diamondCut"
                                         className="form-select"
-                                        value={formData.goldPurityId || ""}
-                                        onChange={handleChange}
+                                        value={formData.diamondCut || ""}
+                                        onChange={handleInput}
                                         required
-                                        disabled
                                     >
-                                        <option value="">-- Select Gold Purity --</option>
-                                        {goldPurity?.map((item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
-                                            </option>
-                                        ))}
+                                        <option value="">-- Select Diamond Cut --</option>
+                                        <option value="excellent">Excellent</option>
+                                        <option value="verygood">Very Good</option>
+                                        <option value="good">Good</option>
                                     </select>
                                 </div>
 
-                                {/* Video Upload */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="video" className="form-label">
-                                        Upload Video:
+                                <p className='mt-5'>3. Pricing & Stock</p>
+                                <div className="col-12 mb-2">
+                                    <label htmlFor="price" className="form-label">
+                                        Enter Price According to Purity:
                                     </label>
-                                    <input
-                                        type="file"
-                                        accept="video/mp4,video/webm,video/ogg"
-                                        id="video"
-                                        className="form-control"
-                                        onChange={handleVideoChange}
-                                    />
 
-                                    {videoPreview && (
-                                        <div className="mt-3 position-relative" style={{ width: "320px" }}>
-                                            <video
-                                                width="320"
-                                                height="180"
-                                                controls
-                                                src={videoPreview}
-                                                className="rounded border"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleRemoveVideo}
-                                                className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                                                style={{
-                                                    borderRadius: "50%",
-                                                    width: "24px",
-                                                    height: "24px",
-                                                    padding: 0,
-                                                    lineHeight: "20px",
-                                                    textAlign: "center"
-                                                }}
-                                            >
-                                                ×
-                                            </button>
+                                    {/* Show selected goldPurity with price input */}
+                                    {formData.goldPurityId?.length > 0 && (
+                                        <div className="mt-2">
+                                            <div className="d-flex flex-wrap gap-2 mb-2">
+                                                {formData.goldPurityId.map((id) => {
+                                                    const goldPurityName =
+                                                        goldPurity.find((m) => m.id.toString() === id.toString())?.name || id;
+
+                                                    const isActive = activeGoldPurityId === id;
+
+                                                    return (
+                                                        <span
+                                                            key={id}
+                                                            className={`badge p-2 fs-6 ${isActive ? "bg-success" : "bg-primary"}`}
+                                                            style={{ cursor: "pointer", minWidth: "50px", textAlign: "center" }}
+                                                            onClick={() => setActiveGoldPurityId(isActive ? null : id)}
+                                                        >
+                                                            {goldPurityName}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Inputs for active tab, full screen width */}
+                                            {activeGoldPurityId && (
+                                                <div className="row">
+                                                    <div className="col-lg-3 col-md-6 col-12">
+                                                        <label className="form-label">Original Price</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control mb-2"
+                                                            placeholder={`Enter original price`}
+                                                            value={formData.original_price?.[activeGoldPurityId] || ""}
+                                                            onChange={(e) =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    original_price: { ...prev.original_price, [activeGoldPurityId]: e.target.value },
+                                                                }))
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="col-lg-3 col-md-6 col-12">
+                                                        <label className="form-label">Selling Price</label>
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            className="form-control mb-2"
+                                                            placeholder={`Enter selling price`}
+                                                            value={formData.selling_price?.[activeGoldPurityId] || ""}
+                                                            onChange={(e) =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    selling_price: { ...prev.selling_price, [activeGoldPurityId]: e.target.value },
+                                                                }))
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="col-lg-3 col-md-6 col-12">
+                                                        <label className="form-label">Profit Percentage</label>
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            className="form-control mb-2"
+                                                            placeholder={`Enter profit percentage`}
+                                                            value={formData.profit?.[activeGoldPurityId] || ""}
+                                                            onChange={(e) =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    profit: { ...prev.profit, [activeGoldPurityId]: e.target.value },
+                                                                }))
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="col-lg-3">
+                                                        <label className="form-label">GST</label>
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            className="form-control mb-2"
+                                                            placeholder={`Enter GST`}
+                                                            value={formData.gst?.[activeGoldPurityId] || ""}
+                                                            onChange={(e) =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    gst: { ...prev.gst, [activeGoldPurityId]: e.target.value },
+                                                                }))
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    {/* Totals for this active purity */}
+                                                    <div className="col-12 mt-3">
+                                                        {(() => {
+                                                            const selling = parseFloat(formData.selling_price?.[activeGoldPurityId] || 0);
+                                                            const profitPercent = parseFloat(formData.profit?.[activeGoldPurityId] || 0);
+                                                            const gstPercent = parseFloat(formData.gst?.[activeGoldPurityId] || 0);
+
+                                                            const profitAmount = (selling * profitPercent) / 100;
+                                                            const totalProfitAmount = selling + profitAmount;
+                                                            const gstAmount = totalProfitAmount * (gstPercent / 100);
+                                                            const finalTotal = totalProfitAmount + gstAmount;
+
+                                                            return (
+                                                                <>
+                                                                    <h5 className='d-flex justify-content-between mb-3'>
+                                                                        <strong>Profit Amount (Selling Price + Profit Margin): </strong>
+                                                                        {totalProfitAmount.toFixed(2)}
+                                                                    </h5>
+
+                                                                    <h5 className='d-flex justify-content-between mb-4'>
+                                                                        <strong>Gst Amount (Profit Amount * GST): </strong>
+                                                                        {gstAmount.toFixed(2)}
+                                                                    </h5>
+
+                                                                    <h5 className='d-flex justify-content-between mb-2'>
+                                                                        <strong>Total Amount (Profit Amount + GST): </strong>
+                                                                        {finalTotal.toFixed(2)}
+                                                                    </h5>
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
+                                <p className='mt-5'>4. Product Images & Media</p>
+
+                                <div className="col-12 mb-2">
+                                    <label htmlFor="images" className="form-label">
+                                        Enter Img and Video According to Metal:
+                                    </label>
+
+                                    {/* Show selected metals with media input */}
+                                    {formData.metalId?.length > 0 && (
+                                        <div className="mt-2">
+                                            <div className="d-flex flex-wrap gap-2 mb-2">
+                                                {formData.metalId.map((id) => {
+                                                    const metalName =
+                                                        metals.find((m) => m.id.toString() === id.toString())?.name || id;
+
+                                                    const isActive = activemetalId === id;
+
+                                                    return (
+                                                        <span
+                                                            key={id}
+                                                            className={`badge p-2 fs-6 ${isActive ? "bg-success" : "bg-primary"}`}
+                                                            style={{ cursor: "pointer", minWidth: "60px", textAlign: "center" }}
+                                                            onClick={() => setActivemetalId(isActive ? null : id)}
+                                                        >
+                                                            {metalName}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Inputs for active tab, full screen width */}
+                                            {activemetalId && (
+                                                <div className="row">
+                                                    {/* Image Upload */}
+                                                    <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                                        <label htmlFor="image" className="form-label">Images :</label>
+                                                        <input
+                                                            type="file"
+                                                            name="images"
+                                                            id="images"
+                                                            className="form-control"
+                                                            onChange={handleChange}
+                                                            accept="image/jpeg,image/jpg,image/png,image/gif"
+                                                            multiple
+                                                        />
+
+                                                        {previewsByMetal[activemetalId]?.images?.length > 0 && (
+                                                            <div className="d-flex flex-wrap gap-2 mt-2">
+                                                                {previewsByMetal[activemetalId].images.map((src, idx) => (
+                                                                    <div key={idx} className="position-relative">
+                                                                        <img
+                                                                            src={src}
+                                                                            alt={`Preview ${idx + 1}`}
+                                                                            className="img-thumbnail img-fluid"
+                                                                            style={{ width: 80, height: 80, objectFit: "cover" }}
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                                                                            onClick={() => handleRemoveImage(idx)}
+                                                                            style={{
+                                                                                borderRadius: "50%",
+                                                                                width: "20px",
+                                                                                height: "20px",
+                                                                                padding: 0,
+                                                                                lineHeight: "15px",
+                                                                                textAlign: "center"
+                                                                            }}
+                                                                        >
+                                                                            ×
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Video Upload */}
+                                                    <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                                        <label htmlFor="video" className="form-label">Upload Video:</label>
+                                                        <input
+                                                            type="file"
+                                                            accept="video/mp4,video/webm,video/ogg"
+                                                            id="video"
+                                                            className="form-control"
+                                                            onChange={handleVideoChange}
+                                                        />
+
+                                                        {previewsByMetal[activemetalId]?.videoPreview && (
+                                                            <div className="mt-3 position-relative" style={{ width: "320px" }}>
+                                                                <video
+                                                                    width="320"
+                                                                    height="180"
+                                                                    controls
+                                                                    src={previewsByMetal[activemetalId].videoPreview}
+                                                                    className="rounded border"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleRemoveVideo}
+                                                                    className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                                                                    style={{
+                                                                        borderRadius: "50%",
+                                                                        width: "24px",
+                                                                        height: "24px",
+                                                                        padding: 0,
+                                                                        lineHeight: "20px",
+                                                                        textAlign: "center"
+                                                                    }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <p className='mt-5'>5. Product Description & Details</p>
+                                {/* Short Description */}
+                                <div className="col-12 mb-2">
+                                    <label htmlFor="shortDescription" className="form-label">
+                                        Short Description :
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="shortDescription"
+                                        id="shortDescription"
+                                        className="form-control"
+                                        placeholder="Enter Short Description "
+                                        autoComplete="off"
+                                        value={formData.shortDescription}
+                                        onChange={handleInput}
+                                        required
+                                    />
+                                </div>
+
+                                {/* Description */}
+                                <div className="col-12 mb-2">
+                                    <label htmlFor="description" className="form-label">
+                                        Description :
+                                    </label>
+                                    <Editor
+                                        value={formData.description}
+                                        onTextChange={(e) => setFormData({ ...formData, description: e.htmlValue })}
+                                        style={{ height: '320px' }}
+                                    />
+                                </div>
+
+                                {/* Product Materials */}
+                                <div className="col-12 mb-2 d-flex flex-column">
+                                    <label className="form-label">Product Materials :</label>
+                                    {formData.productMaterials.map((item, index) => (
+                                        <div key={index} className="d-flex gap-2 mb-2 align-items-center">
+                                            <input
+                                                type="text"
+                                                placeholder="Name"
+                                                className="form-control"
+                                                value={item.name}
+                                                onChange={(e) => handleMaterialChange(index, "name", e.target.value)}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Value"
+                                                className="form-control"
+                                                value={item.value}
+                                                onChange={(e) => handleMaterialChange(index, "value", e.target.value)}
+                                            />
+                                            <button type="button" className="btn btn-danger" onClick={() => removeMaterial(index)}>Clear</button>
+                                        </div>
+                                    ))}
+
+                                    <div>
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary"
+                                            onClick={addMaterial}
+                                        >
+                                            Add New
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <p className='mt-5'>6. Additional Information</p>
+
+                                {/* Estimated Time */}
+                                <div className="col-12 mb-2">
+                                    <label htmlFor="estimatedTime" className="form-label">
+                                        Estimated Time :
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="estimatedTime"
+                                        id="estimatedTime"
+                                        className="form-control"
+                                        placeholder="Enter Estimated Time "
+                                        autoComplete="off"
+                                        value={formData.estimatedTime}
+                                        onChange={handleInput}
+                                        required
+                                    />
+                                </div>
+
                                 {/* Top Seller Boolean */}
-                                <div className="col-lg-6 col-md-6 col-12 mb-2 radio d-flex justify-content-between">
+                                <div className="col-lg-6 col-md-6 col-12 mb-2 radio d-flex justify-content-between align-items-center">
                                     <label className="form-label">Is this product a top seller?</label>
                                     <div className="d-flex gap-5">
-                                        <div className="form-check align-items-start">
+                                        <div className="form-check">
                                             <input
                                                 className="form-check-input"
                                                 type="radio"
                                                 name="topSelling"
                                                 id="topSellingTrue"
-                                                value="true"
+                                                value="1"
                                                 checked={formData.topSelling === 1}
-                                                onChange={() =>
+                                                onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, topSelling: 1 }))
                                                 }
                                             />
@@ -828,16 +1293,15 @@ const ProductsEdit = () => {
                                                 Yes
                                             </label>
                                         </div>
-
-                                        <div className="form-check align-items-start">
+                                        <div className="form-check">
                                             <input
                                                 className="form-check-input"
                                                 type="radio"
                                                 name="topSelling"
                                                 id="topSellingFalse"
-                                                value="false"
+                                                value="0"
                                                 checked={formData.topSelling === 0}
-                                                onChange={() =>
+                                                onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, topSelling: 0 }))
                                                 }
                                             />
@@ -847,7 +1311,6 @@ const ProductsEdit = () => {
                                         </div>
                                     </div>
                                 </div>
-
 
                                 {/* discounted Boolean */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2 radio d-flex justify-content-between align-items-center">
@@ -859,7 +1322,7 @@ const ProductsEdit = () => {
                                                 type="radio"
                                                 name="discounted"
                                                 id="discountedTrue"
-                                                value="true"
+                                                value="1"
                                                 checked={formData.discounted === 1}
                                                 onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, discounted: 1 }))
@@ -875,7 +1338,7 @@ const ProductsEdit = () => {
                                                 type="radio"
                                                 name="discounted"
                                                 id="discountedFalse"
-                                                value="false"
+                                                value="0"
                                                 checked={formData.discounted === 0}
                                                 onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, discounted: 0 }))
@@ -898,7 +1361,7 @@ const ProductsEdit = () => {
                                                 type="radio"
                                                 name="readyToShip"
                                                 id="readyToShipTrue"
-                                                value="true"
+                                                value="1"
                                                 checked={formData.readyToShip === 1}
                                                 onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, readyToShip: 1 }))
@@ -914,7 +1377,7 @@ const ProductsEdit = () => {
                                                 type="radio"
                                                 name="readyToShip"
                                                 id="readyToShipFalse"
-                                                value="false"
+                                                value="0"
                                                 checked={formData.readyToShip === 0}
                                                 onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, readyToShip: 0 }))
@@ -936,8 +1399,8 @@ const ProductsEdit = () => {
                                                 className="form-check-input"
                                                 type="radio"
                                                 name="newArrival"
-                                                id="newArrival"
-                                                value="true"
+                                                id="newArrivalTrue"
+                                                value="1"
                                                 checked={formData.newArrival === 1}
                                                 onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, newArrival: 1 }))
@@ -953,7 +1416,7 @@ const ProductsEdit = () => {
                                                 type="radio"
                                                 name="newArrival"
                                                 id="newArrivalFalse"
-                                                value="false"
+                                                value="0"
                                                 checked={formData.newArrival === 0}
                                                 onChange={(e) =>
                                                     setFormData((prev) => ({ ...prev, newArrival: 0 }))
@@ -966,19 +1429,8 @@ const ProductsEdit = () => {
                                     </div>
                                 </div>
 
-
-                                {/* Description */}
-                                <div className="col-12 mb-2">
-                                    <label htmlFor="description" className="form-label">Description :</label>
-                                    <Editor
-                                        value={formData.description}
-                                        onTextChange={(e) => setFormData({ ...formData, description: e.htmlValue })}
-                                        style={{ height: '320px' }}
-                                    />
-                                </div>
-
                                 {/* Submit */}
-                                <div className="text-end">
+                                <div className="text-end mt-3">
                                     <button
                                         type="submit"
                                         className={`submit-btn ${loading ? 'btn-loading' : ''}`}
