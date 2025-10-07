@@ -78,9 +78,10 @@ const UserTotalOrder = () => {
         },
         {
             name: 'Amount',
-            cell: (row) => row.paymentDetails?.total
-                ? `₹${row.paymentDetails.total.toFixed(2)}`
-                : "-",
+            cell: (row) =>
+                row.paymentDetails?.total
+                    ? `₹${parseFloat(row.paymentDetails.total).toFixed(2)}`
+                    : "-",
             width: "12%",
         },
         {

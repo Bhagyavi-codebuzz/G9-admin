@@ -262,11 +262,12 @@ const ProductsEdit = () => {
         if (imageToRemove && typeof imageToRemove === 'string' && imageToRemove.startsWith('http')) {
             try {
                 const imageName = imageToRemove.split('/').pop();
-                const deleteRes = await Axios.delete(apiendpoints.deleteProductImage, {
+                const deleteRes = await Axios.delete(apiendpoints.deleteProductMedia, {
                     data: {
                         productId: editProducts.id,
                         metalId: activemetalId,
-                        image: imageName
+                        fileName: imageName,
+                        type:'image'
                     },
                     ...authorizationHeaders()
                 });
@@ -315,11 +316,12 @@ const ProductsEdit = () => {
         if (videoToRemove && typeof videoToRemove === 'string' && videoToRemove.startsWith('http')) {
             try {
                 const videoName = videoToRemove.split('/').pop();
-                const deleteRes = await Axios.delete(apiendpoints.deleteProductImage, {
+                const deleteRes = await Axios.delete(apiendpoints.deleteProductMedia, {
                     data: {
                         productId: editProducts.id,
                         metalId: activemetalId,
-                        video: videoName
+                        fileName: videoName,
+                        type:'video'
                     },
                     ...authorizationHeaders()
                 });
@@ -544,8 +546,12 @@ const ProductsEdit = () => {
         console.log("Before submit:", formData);
 
         const requiredFields = [
-            "title", "description", "stockNumber", "estimatedTime",
-            "categoryId", "subCategoryId", "metalId", "stoneShapeId", "goldPurityId", "shortDescription"
+            "title", "stockNumber", "estimatedTime",
+            "categoryId", "subCategoryId", "metalId", "stoneShapeId", "goldPurityId",
+            "selling_price",
+            "profit",
+            "gst",
+            "diamondCut"
         ];
 
         // Validation
@@ -604,9 +610,62 @@ const ProductsEdit = () => {
                 }, {});
             form.append("productMaterials", JSON.stringify(materialsObj));
 
+            // ✅ Gold purity validation
+            if (!formData.goldPurityId || formData.goldPurityId.length === 0) {
+                toast.error("At least one gold purity must be selected!");
+                return;
+            }
+
+            // ✅ Gold Purity ID-wise field validation
+            for (const id of formData.goldPurityId) {
+                const sellingPrice = formData.selling_price?.[id];
+                const profitValue = formData.profit?.[id];
+                const gstValue = formData.gst?.[id];
+
+                if (
+                    sellingPrice === "" || sellingPrice == null ||
+                    profitValue === "" || profitValue == null ||
+                    gstValue === "" || gstValue == null
+                ) {
+                    toast.error(`Please fill all price, profit, and GST fields for gold purity ID: ${id}`);
+                    return;
+                }
+            }
+
             // Append purity array
             if (formData.purity && formData.purity.length > 0) {
                 form.append("purity", JSON.stringify(formData.purity));
+            }
+
+
+            // ✅ Metal-wise image & video validation
+            for (const metalId of formData.metalId) {
+                const metalData = formData.metalsData?.[metalId];
+                const metalName =
+                    metals.find(m => m.id.toString() === metalId.toString())?.name ||
+                    `Metal ID ${metalId}`;
+
+                // ❌ No entry in metalsData
+                if (!metalData) {
+                    toast.error(`Please upload images for ${metalName}`);
+                    return;
+                }
+
+                // ❌ No images
+                if (!metalData.images || metalData.images.length === 0) {
+                    toast.error(`At least one image is required for ${metalName}`);
+                    return;
+                }
+                if (metalData.images.length > 5) {
+                    toast.error(`You can max 5 images add for ${metalName}`)
+                    return
+                }
+
+                // ✅ Optional: If you want to enforce video per metal
+                if (metalData.video.length > 1) {
+                    toast.error(`You can max one video add for ${metalName}`);
+                    return;
+                }
             }
 
             const res = await Axios.post(
@@ -756,7 +815,7 @@ const ProductsEdit = () => {
                                         className="form-select"
                                         value={formData.categoryId || ""}
                                         onChange={handleInput}
-                                        required
+                                        disabled
                                     >
                                         <option value="">-- Select Category --</option>
                                         {category?.map((item) => (
@@ -778,8 +837,8 @@ const ProductsEdit = () => {
                                         className="form-select"
                                         value={formData.subCategoryId || ""}
                                         onChange={handleInput}
-                                        disabled={filteredSubcategories.length === 0}
-                                        required
+                                        disabled
+
                                     >
                                         <option value="">-- Select Sub Category --</option>
                                         {filteredSubcategories?.map((item) => (
@@ -902,7 +961,7 @@ const ProductsEdit = () => {
                                         className="form-select"
                                         value={formData.stoneShapeId || ""}
                                         onChange={handleInput}
-                                        required
+                                        disabled
                                     >
                                         <option value="">-- Select Stone Shape --</option>
                                         {stoneShape?.map((item) => (
@@ -1110,6 +1169,7 @@ const ProductsEdit = () => {
                                                             className="form-control"
                                                             onChange={handleChange}
                                                             accept="image/jpeg,image/jpg,image/png,image/gif"
+                                                            // required
                                                             multiple
                                                         />
 

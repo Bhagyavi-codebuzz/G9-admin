@@ -46,7 +46,7 @@ const Order = () => {
         const searchTerm = search.toLowerCase();
         return (
             (o.name || "").toLowerCase().includes(searchTerm) ||
-            (o.orderId || "").toString().toLowerCase().includes(searchTerm) 
+            (o.orderId || "").toString().toLowerCase().includes(searchTerm)
         );
     });
 
@@ -114,35 +114,37 @@ const Order = () => {
         {
             name: 'Total Items',
             cell: (row) => (
-                <span
-                    onClick={() =>
-                        navigate(`/admin/totalitem/${row.id}`, {
-                            state: {
-                                items: row.items
-                            }
-                        })
-                    }
-                    style={{
-                        cursor: "pointer",
-                        color: "",
-                        textDecoration: "underline"
-                    }}
-                >
-                    {row.totalItems || "-"}
-                </span>
+                row.totalItems ? (
+                    <span
+                        onClick={() =>
+                            navigate(`/admin/totalitem/${row.id}`, {
+                                state: { items: row.items }
+                            })
+                        }
+                        style={{
+                            cursor: "pointer",
+                            textDecoration: "underline"
+                        }}
+                    >
+                        {row.totalItems}
+                    </span>
+                ) : (
+                    "-"
+                )
             ),
             width: "10%",
         },
-        // {
-        //     name: 'Description',
-        //     cell: (row) => (
-        //         row.description
-        //             ? <div dangerouslySetInnerHTML={{ __html: row.description }} />
-        //             : "-"
-        //     ),
-        //     width: "15%",
-        // },
-        {
+
+// {
+//     name: 'Description',
+//     cell: (row) => (
+//         row.description
+//             ? <div dangerouslySetInnerHTML={{ __html: row.description }} />
+//             : "-"
+//     ),
+//     width: "15%",
+// },
+{
             name: 'Created Date',
             cell: (row) => (
                 CreatedDate(row.createdAt) || "-"

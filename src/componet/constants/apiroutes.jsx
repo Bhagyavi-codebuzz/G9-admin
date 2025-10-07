@@ -60,7 +60,7 @@ export const apiendpoints = {
     detailsProducts: "/products/detail/:id",
     addCSV: "/products/addCsv",
     addProductMedia: "/products/add-media",
-    deleteProductImage: "/products/deleteImage",
+    deleteProductMedia: "/products/deleteMedia",
 
 
     // Slider 

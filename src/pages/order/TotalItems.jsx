@@ -54,30 +54,30 @@ const TotalItems = () => {
                 margin: '10px 0'
             }
         },
-        {
-            name: 'Image',
-            cell: (row) => {
-                const firstImage = Array.isArray(row.images) && row.images.length > 0
-                    ? row.images[0]
-                    : UserImage;
+        // {
+        //     name: 'Image',
+        //     cell: (row) => {
+        //         const firstImage = Array.isArray(row.images) && row.images.length > 0
+        //             ? row.images[0]
+        //             : UserImage;
 
-                return (
-                    <img
-                        src={firstImage}
-                        alt="Image"
-                        className={`${(!row.images || row.images.length === 0)}`}
-                        style={{
-                            maxHeight: "80px",
-                            maxWidth: "80px",
-                            width: "100%",
-                            height: "100%",
-                            padding: '8px 0',
-                        }}
-                    />
-                );
-            },
-            width: "180px",
-        },
+        //         return (
+        //             <img
+        //                 src={firstImage}
+        //                 alt="Image"
+        //                 className={`${(!row.images || row.images.length === 0)}`}
+        //                 style={{
+        //                     maxHeight: "80px",
+        //                     maxWidth: "80px",
+        //                     width: "100%",
+        //                     height: "100%",
+        //                     padding: '8px 0',
+        //                 }}
+        //             />
+        //         );
+        //     },
+        //     width: "180px",
+        // },
 
         {
             name: 'Title',

@@ -266,24 +266,25 @@ const ProductsDetails = () => {
                                     </div>
                                 </div>
 
-                                {/* Selected Gold Purity - REMOVED DUPLICATE SECTION */}
+                                {/* Selected Gold Purity */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label className="form-label">Selected Purity:</label>
                                     <div className="mt-2">
-                                        {uniqueGoldPurityIds.length > 0 ? (
-                                            uniqueGoldPurityIds.map((id) => {
-                                                const goldPurityName = goldPurity.find((m) => m.id.toString() === id.toString())?.name || id;
-                                                return (
-                                                    <span key={`purity-${id}`} className="badge bg-primary p-2 fs-6 me-2 mb-2">
-                                                        {goldPurityName}
-                                                    </span>
-                                                );
-                                            })
+                                        {formData?.purity && formData.purity.length > 0 ? (
+                                            formData.purity.map((item, index) => (
+                                                <span
+                                                    key={`purity-${item.value || index}`}
+                                                    className="badge bg-primary p-2 fs-6 me-2 mb-2"
+                                                >
+                                                    {item.name || `Purity ${item.value}`}
+                                                </span>
+                                            ))
                                         ) : (
                                             <span className="text-muted">No purity selected</span>
                                         )}
                                     </div>
                                 </div>
+                                        
 
                                 {/* stoneShape Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
@@ -505,21 +506,21 @@ const ProductsDetails = () => {
                                 {/* Product Materials */}
                                 <div className="col-12 mb-2">
                                     <label className="form-label">Product Materials :</label>
-                                    {Array.isArray(formData?.productMaterials) && formData.productMaterials.length > 0 ? (
-                                        formData.productMaterials.map((item, index) => (
+                                    {formData?.productMaterials && Object.keys(formData.productMaterials).length > 0 ? (
+                                        Object.entries(formData.productMaterials).map(([name, value], index) => (
                                             <div key={`material-${index}`} className="d-flex gap-2 mb-2 align-items-center">
                                                 <input
                                                     type="text"
                                                     placeholder="Name"
                                                     className="form-control"
-                                                    value={item.name || "-"}
+                                                    value={name || "-"}
                                                     readOnly
                                                 />
                                                 <input
                                                     type="text"
                                                     placeholder="Value"
                                                     className="form-control"
-                                                    value={item.value || "-"}
+                                                    value={value || "-"}
                                                     readOnly
                                                 />
                                             </div>
@@ -528,6 +529,7 @@ const ProductsDetails = () => {
                                         <div className="text-muted">No product materials available</div>
                                     )}
                                 </div>
+
 
                                 <p className='mt-5'>6. Product Status & Flags</p>
 
