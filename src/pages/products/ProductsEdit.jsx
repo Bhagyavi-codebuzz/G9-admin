@@ -662,10 +662,10 @@ const ProductsEdit = () => {
                 }
 
                 // ✅ Optional: If you want to enforce video per metal
-                if (metalData.video.length > 1) {
-                    toast.error(`You can max one video add for ${metalName}`);
-                    return;
-                }
+                // if (metalData.video.length > 1) {
+                //     toast.error(`You can max one video add for ${metalName}`);
+                //     return;
+                // }
             }
 
             const res = await Axios.post(
@@ -1130,7 +1130,7 @@ const ProductsEdit = () => {
 
                                 <div className="col-12 mb-2">
                                     <label htmlFor="images" className="form-label">
-                                        Enter Img and Video According to Metal:
+                                        Enter Image and Video According to Metal:
                                     </label>
 
                                     {/* Show selected metals with media input */}

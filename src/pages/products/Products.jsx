@@ -8,6 +8,8 @@ import { apiendpoints } from '../../componet/constants/apiroutes'
 import Delete from '../../componet/modal/delete/Delete';
 import { CreatedDate } from '../../componet/helper/DateTimeUtils';
 import AddCSV from '../../componet/modal/addCSV/AddCSV';
+import Papa from "papaparse";
+import { saveAs } from "file-saver";
 
 const Products = () => {
     const navigate = useNavigate();
@@ -57,49 +59,49 @@ const Products = () => {
         {
             name: 'No.',
             selector: (_, index) => (currentPage - 1) * perPage + (index + 1),
-            width: '60px',
+            width: '80px',
             style: {
                 margin: '10px 0'
             }
         },
-        {
-            name: 'Image',
-            cell: (row) => {
-                const imageUrl = Array.isArray(row.images) && row.images.length > 0
-                    ? row.images[0]
-                    : "";
+        // {
+        //     name: 'Image',
+        //     cell: (row) => {
+        //         const imageUrl = Array.isArray(row.images) && row.images.length > 0
+        //             ? row.images[0]
+        //             : "";
 
-                return (
-                    <img
-                        src={imageUrl}
-                        alt="Image"
-                        className={`${(!row.image || row.image.length === 0)}`}
-                        style={{
-                            maxHeight: "50px",
-                            maxWidth: "50px",
-                            width: "100%",
-                            height: "100%",
-                            padding: '8px 0',
-                        }}
-                    />
-                );
-            },
-            width: "100px",
-        },
-        {
-            name: 'Title',
-            cell: (row) => row.title || "-",
-            width: "16%",
-        },
+        //         return (
+        //             <img
+        //                 src={imageUrl}
+        //                 alt="Image"
+        //                 className={`${(!row.image || row.image.length === 0)}`}
+        //                 style={{
+        //                     maxHeight: "50px",
+        //                     maxWidth: "50px",
+        //                     width: "100%",
+        //                     height: "100%",
+        //                     padding: '8px 0',
+        //                 }}
+        //             />
+        //         );
+        //     },
+        //     width: "100px",
+        // },
         {
             name: 'Stock Number',
             cell: (row) => row.stockNumber || "-",
             width: "12%",
         },
         {
-            name: 'Selling Price',
-            cell: (row) => row.selling_price || "-",
-            width: "12%",
+            name: 'Category Name',
+            cell: (row) => row.categoryName || "-",
+            width: "14%",
+        },
+        {
+            name: 'Sub Category Name',
+            cell: (row) => row.subCategoryName || "-",
+            width: "14%",
         },
         {
             name: 'Status',
@@ -139,7 +141,6 @@ const Products = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deleteproducts: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
                         }}
                     >
                         <FaTrash />
@@ -205,6 +206,96 @@ const Products = () => {
             setIsDeleteLoading(false);
         }
     }
+
+    // ✅ Export all Products to CSV
+    const handleExportCSV = async () => {
+        try {
+            // ✅ Step 1: Fetch all products
+            const res = await Axios.get(`${apiendpoints.products}`, authorizationHeaders());
+
+            if (!res.data?.status) {
+                toast.error(res.data?.message || "Failed to fetch products");
+                return;
+            }
+
+            const allProducts = res.data?.data || [];
+
+            if (!Array.isArray(allProducts) || allProducts.length === 0) {
+                toast.error("No products available to export!");
+                return;
+            }
+
+            // ✅ Step 2: Format for CSV
+            const csvData = allProducts.map((p) => {
+                // 🧩 Parse metals safely
+                let metalList = [];
+                try {
+                    metalList = JSON.parse(p.metals || "[]");
+                } catch {
+                    metalList = [];
+                }
+
+                // 🧩 Flatten nested purity details
+                const purityDetails = (p.purity || [])
+                    .map(
+                        (pur) =>
+                            `${pur.name}: Sell=${pur.selling_price}, Profit=${pur.profit}, GST=${pur.gst}, GST Price=${pur.gstPrice}`
+                    )
+                    .join(" | ");
+
+                // 🧩 Flatten metals
+                const metalDetails = metalList.join(", ");
+
+                // 🧩 Flatten product materials
+                const productMaterialDetails = p.productMaterials
+                    ? Object.entries(p.productMaterials)
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join(" | ")
+                    : "-";
+
+                // 🧩 Flatten media info
+                const mediaSummary = (p.media || [])
+                    .map(
+                        (m) =>
+                            `${m.name} (${m.images?.length || 0} imgs, ${m.videos?.length || 0} vids)`
+                    )
+                    .join(" | ");
+
+                return {
+                    ID: p.id || "-",
+                    Title: p.title || "-",
+                    StockNumber: p.stockNumber || "-",
+                    Category: p.categoryName || "-",
+                    SubCategory: p.subCategoryName || "-",
+                    Status: p.status || "-",
+                    EstimatedTime: p.estimatedTime || "-",
+                    DiamondCut: p.diamondCut || "-",
+                    TopSelling: p.topSelling ? "Yes" : "No",
+                    ReadyToShip: p.readyToShip ? "Yes" : "No",
+                    Discounted: p.discounted ? "Yes" : "No",
+                    NewArrival: p.newArrival ? "Yes" : "No",
+                    ShortDescription: p.shortDescription || "-",
+                    PurityDetails: purityDetails || "-",
+                    ProductMaterials: productMaterialDetails,
+                    Metals: metalDetails || "-",
+                    Media: mediaSummary || "-",
+                    CreatedAt: CreatedDate(p.createdAt) || "-",
+                };
+            });
+
+            // ✅ Step 3: Convert to CSV & download
+            const csv = Papa.unparse(csvData);
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            saveAs(blob, `products_${new Date().toISOString().slice(0, 10)}.csv`);
+
+            toast.success("Products exported successfully!");
+        } catch (err) {
+            console.error("Export-Products-CSV-Error++", err);
+            toast.error("Failed to export products");
+        }
+    };
+
+
     return (
         <>
             <section className="categorylist-section mt-4 mt-lg-4 mt-xl-5">
@@ -228,6 +319,15 @@ const Products = () => {
                                             <button className="add-btn boreder-0" type="button"
                                                 onClick={() => navigate("/admin/addproducts")}>
                                                 + Add Product
+                                            </button>
+
+                                            {/* ✅ Export Button */}
+                                            <button
+                                                className="add-btn"
+                                                type="button"
+                                                onClick={handleExportCSV}
+                                            >
+                                                Export CSV
                                             </button>
                                         </div>
 

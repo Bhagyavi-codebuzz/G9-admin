@@ -155,10 +155,10 @@ const AddProducts = () => {
             console.log(metalData,"==-=-=- metalData ==-=")
 
             // ✅ Optional: If you want to enforce video per metal
-            if (metalData.video.length >1) {
-                toast.error(`You can max one video add for ${metalName}`);
-                return;
-            }
+            // if (metalData.video.length >1) {
+            //     toast.error(`You can max one video add for ${metalName}`);
+            //     return;
+            // }
         }
 
 
@@ -930,7 +930,7 @@ const AddProducts = () => {
 
                         <div className="col-12 mb-2">
                             <label htmlFor="images" className="form-label">
-                                Enter Img and Video According to Purity :
+                                Enter Image and Video According to Purity :
                             </label>
 
                             {/* Show selected goldPurity with price input */}
