@@ -102,7 +102,7 @@ const Order = () => {
         {
             name: 'Amount',
             cell: (row) => row.paymentDetails?.total
-                ? `$${row.paymentDetails.total.toFixed(2)}`
+                ? `${row.paymentDetails.total.toFixed(2)}`
                 : "-",
             width: "12%",
         },

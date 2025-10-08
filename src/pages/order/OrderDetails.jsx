@@ -332,11 +332,11 @@ const OrderDetails = () => {
                                                 </div>
                                                 <div>
                                                     <strong style={{ fontSize: "16px" }}>Price:</strong>
-                                                    <div>${item.price || "-"}</div>
+                                                    <div>{item.price || "-"}</div>
                                                 </div>
                                                 <div>
                                                     <strong style={{ fontSize: "16px" }}>Subtotal:</strong>
-                                                    <div>${item.subtotal || "-"}</div>
+                                                    <div>{item.subtotal || "-"}</div>
                                                 </div>
                                                 <div>
                                                     <strong style={{ fontSize: "16px" }}>Status:</strong>
