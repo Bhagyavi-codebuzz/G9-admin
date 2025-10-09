@@ -267,7 +267,7 @@ const ProductsEdit = () => {
                         productId: editProducts.id,
                         metalId: activemetalId,
                         fileName: imageName,
-                        type:'image'
+                        type: 'image'
                     },
                     ...authorizationHeaders()
                 });
@@ -321,7 +321,7 @@ const ProductsEdit = () => {
                         productId: editProducts.id,
                         metalId: activemetalId,
                         fileName: videoName,
-                        type:'video'
+                        type: 'video'
                     },
                     ...authorizationHeaders()
                 });
@@ -546,7 +546,7 @@ const ProductsEdit = () => {
         console.log("Before submit:", formData);
 
         const requiredFields = [
-            "title", "stockNumber", "estimatedTime",
+            "stockNumber", "estimatedTime",
             "categoryId", "subCategoryId", "metalId", "stoneShapeId", "goldPurityId",
             "selling_price",
             "profit",
@@ -789,7 +789,7 @@ const ProductsEdit = () => {
                                 {/* Title */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="title" className="form-label">
-                                        Name :
+                                        Name (Optional) :
                                     </label>
                                     <input
                                         type="text"
@@ -800,7 +800,6 @@ const ProductsEdit = () => {
                                         autoComplete="off"
                                         value={formData.title}
                                         onChange={handleInput}
-                                        required
                                     />
                                 </div>
 
@@ -854,7 +853,7 @@ const ProductsEdit = () => {
                                 {/* metal select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="metalId" className="form-label">
-                                        Select Metals:
+                                        Select Metals :
                                     </label>
                                     <select
                                         name="metalId"
@@ -900,7 +899,7 @@ const ProductsEdit = () => {
                                 {/* Gold Purity Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="goldPurityId" className="form-label">
-                                        Select Purity:
+                                        Select Purity :
                                     </label>
                                     <select
                                         name="goldPurityId"
@@ -953,7 +952,7 @@ const ProductsEdit = () => {
                                 {/* stoneShape Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="stoneShapeId" className="form-label">
-                                        Select Stone Shape:
+                                        Select Stone Shape :
                                     </label>
                                     <select
                                         name="stoneShapeId"
@@ -975,7 +974,7 @@ const ProductsEdit = () => {
                                 {/* Diamond cut Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="diamondCut" className="form-label">
-                                        Select Diamond Cut:
+                                        Select Diamond Cut :
                                     </label>
                                     <select
                                         name="diamondCut"
@@ -1025,66 +1024,84 @@ const ProductsEdit = () => {
                                             {activeGoldPurityId && (
                                                 <div className="row">
                                                     <div className="col-lg-3 col-md-6 col-12">
-                                                        <label className="form-label">Original Price</label>
+                                                        <label className="form-label">Original Price (Optional) :</label>
                                                         <input
                                                             type="text"
                                                             className="form-control mb-2"
                                                             placeholder={`Enter original price`}
                                                             value={formData.original_price?.[activeGoldPurityId] || ""}
-                                                            onChange={(e) =>
-                                                                setFormData((prev) => ({
-                                                                    ...prev,
-                                                                    original_price: { ...prev.original_price, [activeGoldPurityId]: e.target.value },
-                                                                }))
+                                                            onChange={(e) => {
+                                                                const value = e.target.value
+                                                                if (/^\d*\.?\d*$/.test(value)) {
+                                                                    setFormData((prev) => ({
+                                                                        ...prev,
+                                                                        original_price: { ...prev.original_price, [activeGoldPurityId]: e.target.value },
+                                                                    }))
+                                                                }
+                                                            }
                                                             }
                                                         />
                                                     </div>
                                                     <div className="col-lg-3 col-md-6 col-12">
-                                                        <label className="form-label">Selling Price</label>
+                                                        <label className="form-label">Selling Price :</label>
                                                         <input
                                                             type="text"
                                                             required
                                                             className="form-control mb-2"
                                                             placeholder={`Enter selling price`}
                                                             value={formData.selling_price?.[activeGoldPurityId] || ""}
-                                                            onChange={(e) =>
-                                                                setFormData((prev) => ({
-                                                                    ...prev,
-                                                                    selling_price: { ...prev.selling_price, [activeGoldPurityId]: e.target.value },
-                                                                }))
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                if (/^\d*\.?\d*$/.test(value)) {
+                                                                    setFormData((prev) => ({
+                                                                        ...prev,
+                                                                        selling_price: { ...prev.selling_price, [activeGoldPurityId]: e.target.value },
+                                                                    }))
+                                                                }
+                                                            }
                                                             }
                                                         />
                                                     </div>
                                                     <div className="col-lg-3 col-md-6 col-12">
-                                                        <label className="form-label">Profit Percentage</label>
+                                                        <label className="form-label">Profit Percentage :</label>
                                                         <input
                                                             type="text"
                                                             required
                                                             className="form-control mb-2"
                                                             placeholder={`Enter profit percentage`}
                                                             value={formData.profit?.[activeGoldPurityId] || ""}
-                                                            onChange={(e) =>
-                                                                setFormData((prev) => ({
-                                                                    ...prev,
-                                                                    profit: { ...prev.profit, [activeGoldPurityId]: e.target.value },
-                                                                }))
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                if (/^\d*\.?\d*$/.test(value)) {
+                                                                    setFormData((prev) => ({
+                                                                        ...prev,
+                                                                        profit: { ...prev.profit, [activeGoldPurityId]: e.target.value },
+                                                                    }))
+                                                                }
+                                                            }
                                                             }
                                                         />
                                                     </div>
                                                     <div className="col-lg-3">
-                                                        <label className="form-label">GST</label>
+                                                        <label className="form-label">GST :</label>
                                                         <input
                                                             type="text"
                                                             required
                                                             className="form-control mb-2"
                                                             placeholder={`Enter GST`}
                                                             value={formData.gst?.[activeGoldPurityId] || ""}
-                                                            onChange={(e) =>
-                                                                setFormData((prev) => ({
-                                                                    ...prev,
-                                                                    gst: { ...prev.gst, [activeGoldPurityId]: e.target.value },
-                                                                }))
-                                                            }
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                // Allow only digits (0–9)
+                                                                if (/^\d*\.?\d*$/.test(value)) {
+                                                                    setFormData((prev) => ({
+                                                                        ...prev,
+                                                                        gst: { ...prev.gst, [activeGoldPurityId]: value },
+                                                                    }));
+                                                                }
+                                                            }}
+
+
                                                         />
                                                     </div>
 
@@ -1206,7 +1223,7 @@ const ProductsEdit = () => {
 
                                                     {/* Video Upload */}
                                                     <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                                        <label htmlFor="video" className="form-label">Upload Video:</label>
+                                                        <label htmlFor="video" className="form-label">Upload Video :</label>
                                                         <input
                                                             type="file"
                                                             accept="video/mp4,video/webm,video/ogg"
@@ -1252,7 +1269,7 @@ const ProductsEdit = () => {
                                 {/* Short Description */}
                                 <div className="col-12 mb-2">
                                     <label htmlFor="shortDescription" className="form-label">
-                                        Short Description :
+                                        Short Description (Optional) :
                                     </label>
                                     <input
                                         type="text"
@@ -1263,14 +1280,13 @@ const ProductsEdit = () => {
                                         autoComplete="off"
                                         value={formData.shortDescription}
                                         onChange={handleInput}
-                                        required
                                     />
                                 </div>
 
                                 {/* Description */}
                                 <div className="col-12 mb-2">
                                     <label htmlFor="description" className="form-label">
-                                        Description :
+                                        Description (Optional) :
                                     </label>
                                     <Editor
                                         value={formData.description}
@@ -1281,7 +1297,7 @@ const ProductsEdit = () => {
 
                                 {/* Product Materials */}
                                 <div className="col-12 mb-2 d-flex flex-column">
-                                    <label className="form-label">Product Materials :</label>
+                                    <label className="form-label">Product Materials (Optional) :</label>
                                     {formData.productMaterials.map((item, index) => (
                                         <div key={index} className="d-flex gap-2 mb-2 align-items-center">
                                             <input

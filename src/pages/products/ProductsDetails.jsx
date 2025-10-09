@@ -192,7 +192,7 @@ const ProductsDetails = () => {
 
                                 {/* Title */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="title" className="form-label">Name :</label>
+                                    <label htmlFor="title" className="form-label">Name (Optional) :</label>
                                     <input
                                         type="text"
                                         name="title"
@@ -249,7 +249,7 @@ const ProductsDetails = () => {
 
                                 {/* Selected Metals */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label className="form-label">Selected Metals:</label>
+                                    <label className="form-label">Selected Metals :</label>
                                     <div className="mt-2">
                                         {uniqueMetalIds.length > 0 ? (
                                             uniqueMetalIds.map((id) => {
@@ -268,7 +268,7 @@ const ProductsDetails = () => {
 
                                 {/* Selected Gold Purity */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label className="form-label">Selected Purity:</label>
+                                    <label className="form-label">Selected Purity :</label>
                                     <div className="mt-2">
                                         {formData?.purity && formData.purity.length > 0 ? (
                                             formData.purity.map((item, index) => (
@@ -289,7 +289,7 @@ const ProductsDetails = () => {
                                 {/* stoneShape Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="stoneShapeId" className="form-label">
-                                        Select Stone Shape:
+                                        Select Stone Shape :
                                     </label>
                                     <select
                                         name="stoneShapeId"
@@ -310,7 +310,7 @@ const ProductsDetails = () => {
                                 {/* Diamond cut Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="diamondCut" className="form-label">
-                                        Select Diamond Cut:
+                                        Select Diamond Cut :
                                     </label>
                                     <select
                                         name="diamondCut"
@@ -341,7 +341,7 @@ const ProductsDetails = () => {
                                                     <div className="card-body">
                                                         <div className="row">
                                                             <div className="col-md-3">
-                                                                <label className="form-label">Original Price</label>
+                                                                <label className="form-label">Original Price (Optional) </label>
                                                                 <input
                                                                     type="text"
                                                                     className="form-control"
@@ -446,7 +446,7 @@ const ProductsDetails = () => {
 
                                 {/* Videos */}
                                 <div className="col-12 mb-2">
-                                    <label className="form-label">Videos:</label>
+                                    <label className="form-label">Videos :</label>
                                     {formData.media?.some(media => media.videos?.length > 0) ? (
                                         formData.media.map((mediaItem, index) => (
                                             mediaItem.videos?.length > 0 && (
@@ -470,7 +470,7 @@ const ProductsDetails = () => {
                                             )
                                         ))
                                     ) : (
-                                        <span className="text-muted">No videos available</span>
+                                        <div className="text-muted">No videos available</div>
                                     )}
                                 </div>
 
@@ -479,7 +479,7 @@ const ProductsDetails = () => {
                                 {/* Short Description */}
                                 <div className="col-12 mb-2">
                                     <label htmlFor="shortDescription" className="form-label">
-                                        Short Description :
+                                        Short Description (Optional) :
                                     </label>
                                     <input
                                         type="text"
@@ -494,7 +494,7 @@ const ProductsDetails = () => {
                                 {/* Description */}
                                 <div className="col-12 mb-2">
                                     <label htmlFor="description" className="form-label">
-                                        Description :
+                                        Description (Optional) :
                                     </label>
                                     <Editor
                                         value={formData.description || ""}
@@ -505,7 +505,7 @@ const ProductsDetails = () => {
 
                                 {/* Product Materials */}
                                 <div className="col-12 mb-2">
-                                    <label className="form-label">Product Materials :</label>
+                                    <label className="form-label">Product Materials (Optional) :</label>
                                     {formData?.productMaterials && Object.keys(formData.productMaterials).length > 0 ? (
                                         Object.entries(formData.productMaterials).map(([name, value], index) => (
                                             <div key={`material-${index}`} className="d-flex gap-2 mb-2 align-items-center">

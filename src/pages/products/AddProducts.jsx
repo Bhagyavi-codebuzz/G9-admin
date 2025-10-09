@@ -109,7 +109,7 @@ const AddProducts = () => {
             const firstChar = formData.title.charAt(0);
             if (firstChar !== firstChar.toUpperCase()) {
                 toast.error("Title must start with a capital letter!");
-            } 
+            }
         }
 
 
@@ -152,7 +152,7 @@ const AddProducts = () => {
                 return
             }
 
-            console.log(metalData,"==-=-=- metalData ==-=")
+            console.log(metalData, "==-=-=- metalData ==-=")
 
             // ✅ Optional: If you want to enforce video per metal
             // if (metalData.video.length >1) {
@@ -824,11 +824,15 @@ const AddProducts = () => {
                                                     className="form-control mb-2"
                                                     placeholder={`Enter original price`}
                                                     value={formData.original_price?.[activeGoldPurityId] || ""}
-                                                    onChange={(e) =>
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            original_price: { ...prev.original_price, [activeGoldPurityId]: e.target.value },
-                                                        }))
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^\d*\.?\d*$/.test(value)) {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                original_price: { ...prev.original_price, [activeGoldPurityId]: value },
+                                                            }))
+                                                        }
+                                                    }
                                                     }
                                                 />
                                             </div>
@@ -840,11 +844,15 @@ const AddProducts = () => {
                                                     className="form-control mb-2"
                                                     placeholder={`Enter selling price`}
                                                     value={formData.selling_price?.[activeGoldPurityId] || ""}
-                                                    onChange={(e) =>
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            selling_price: { ...prev.selling_price, [activeGoldPurityId]: e.target.value },
-                                                        }))
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^\d*\.?\d*$/.test(value)) {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                selling_price: { ...prev.selling_price, [activeGoldPurityId]: value },
+                                                            }))
+                                                        }
+                                                    }
                                                     }
                                                 />
                                             </div>
@@ -856,11 +864,16 @@ const AddProducts = () => {
                                                     className="form-control mb-2"
                                                     placeholder={`Enter profit percentage`}
                                                     value={formData.profit?.[activeGoldPurityId] || ""}
-                                                    onChange={(e) =>
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            profit: { ...prev.profit, [activeGoldPurityId]: e.target.value },
-                                                        }))
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+
+                                                        if (/^\d*\.?\d*$/.test(value)) {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                profit: { ...prev.profit, [activeGoldPurityId]: value },
+                                                            }))
+                                                        }
+                                                    }
                                                     }
                                                 />
                                             </div>
@@ -870,14 +883,18 @@ const AddProducts = () => {
                                                     type="text"
                                                     required
                                                     className="form-control mb-2"
-                                                    placeholder={`Enter GST`}
+                                                    placeholder="Enter GST"
                                                     value={formData.gst?.[activeGoldPurityId] || ""}
-                                                    onChange={(e) =>
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            gst: { ...prev.gst, [activeGoldPurityId]: e.target.value },
-                                                        }))
-                                                    }
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        // Allow only digits (0–9)
+                                                        if (/^\d*\.?\d*$/.test(value)) {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                gst: { ...prev.gst, [activeGoldPurityId]: value },
+                                                            }));
+                                                        }
+                                                    }}
                                                 />
                                             </div>
 
@@ -1067,7 +1084,7 @@ const AddProducts = () => {
 
                         {/* Product Materials */}
                         <div className="col-12 mb-2 d-flex flex-column">
-                            <label className="form-label">Product Materials :</label>
+                            <label className="form-label">Product Materials (Optional) :</label>
                             {formData.productMaterials.map((item, index) => (
                                 <div key={index} className="d-flex gap-2 mb-2 align-items-center">
                                     <input
