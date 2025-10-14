@@ -5,6 +5,8 @@ import { apiendpoints } from '../../componet/constants/apiroutes';
 import left from '../../assets/images/lefticon.png';
 import { toast } from 'react-toastify';
 import PhoneInput from 'react-phone-input-2';
+import { formatDisplayNumber, parseBackendPhone } from '../../utils/PhoneUtils';
+import { FlagImage } from 'react-international-phone';
 
 const RegisterUserDetails = () => {
     const { id } = useParams();
@@ -42,6 +44,11 @@ const RegisterUserDetails = () => {
     useEffect(() => {
         getRegisterUserDetails(id);
     }, [id]);
+
+    const { country_code, phone_number } = parseBackendPhone(formData?.Mobile_number);
+
+    const iso2 = country_code.toLowerCase() || '';
+    const displayMobile = formatDisplayNumber(phone_number, country_code) || "-";
 
     return (
         <>
@@ -90,12 +97,28 @@ const RegisterUserDetails = () => {
 
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label className="form-label">Mobile :</label>
-                                    <PhoneInput
+                                    {/* <PhoneInput
                                         country={"in"}
                                         value={formData?.Mobile_number || ""}
                                         inputClass="form-control w-100"
                                         disabled
-                                    />
+                                    /> */}
+                                    {/* <div className="d-flex align-items-center form-control">
+                                        {iso2 && <FlagImage iso2={iso2} style={{ width: 24, height: 18 }} />}
+                                        <span className="ms-2">{displayMobile}</span>
+                                    </div> */}
+
+                                    <div className="mobile-input-wrapper ">
+                                        <span className="country-code">+91</span>
+                                        <span className="divider"></span>
+                                        <input
+                                            type="text"
+                                            className="border-0"
+                                            value={formData?.Mobile_number || ""}
+                                            readOnly
+                                        />
+                                    </div>
+
                                 </div>
 
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">

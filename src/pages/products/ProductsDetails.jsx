@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { authorizationHeaders, Axios } from '../../componet/helper/Axios';
 import { apiendpoints } from '../../componet/constants/apiroutes';
@@ -20,6 +20,8 @@ const ProductsDetails = () => {
     const [metals, setmetals] = useState([]);
     const [stoneShape, setStoneShape] = useState([]);
     const [goldPurity, setGoldPurity] = useState([]);
+    const [activePurityTab, setActivePurityTab] = useState(null);
+    const [activeMetalTab, setActiveMetalTab] = useState(null);
 
     const handleClose = () => setShow(false);
     const handleOpen = (img) => {
@@ -31,16 +33,15 @@ const ProductsDetails = () => {
         setLoader(true);
         try {
             const res = await Axios.get(
-                apiendpoints.detailsProducts.replace(":id", id),
+                apiendpoints.detailsProducts.replace(':id', id),
                 authorizationHeaders()
             );
-            console.log("🚀 ~ getProductsDetails ~ res:", res)
 
             if (res.data?.status) {
                 let data = res.data.data;
 
                 // Parse product materials
-                if (data.productMaterials && typeof data.productMaterials === "string") {
+                if (data.productMaterials && typeof data.productMaterials === 'string') {
                     try {
                         const parsed = JSON.parse(data.productMaterials);
                         data.productMaterials = Object.entries(parsed).map(([key, value]) => ({
@@ -48,7 +49,6 @@ const ProductsDetails = () => {
                             value,
                         }));
                     } catch (err) {
-                        console.error("Failed to parse productMaterials:", err);
                         data.productMaterials = [];
                     }
                 }
@@ -56,16 +56,23 @@ const ProductsDetails = () => {
                 // Parse metals from string to array
                 data.metalId = data.metals ? JSON.parse(data.metals) : [];
 
-                // Parse gold purity from purity array
-                data.goldPurityId = data.purity ? data.purity.map(p => p.id) : [];
+                // Parse gold purity from purity array using value
+                data.goldPurityId = data.purity ? data.purity.map((p) => p.value) : [];
 
                 setFormData(data);
+                // Set the first purity value as the default active tab
+                if (data.purity && data.purity.length > 0) {
+                    setActivePurityTab(data.purity[0].value);
+                }
+                // Set the first metal as the default active tab if media exists
+                if (data.media && data.media.length > 0) {
+                    setActiveMetalTab(data.media[0].id);
+                }
             } else {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error("Error fetching product details:", err);
-            toast.error("Failed to fetch product details");
+            toast.error('Failed to fetch product details');
         } finally {
             setLoader(false);
         }
@@ -84,9 +91,9 @@ const ProductsDetails = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error("Error fetching category:", err);
+            console.error('Error fetching category:', err);
         }
-    }
+    };
 
     const fetchSubCategory = async () => {
         try {
@@ -97,9 +104,9 @@ const ProductsDetails = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error("Error fetching subcategory:", err);
+            console.error('Error fetching subcategory:', err);
         }
-    }
+    };
 
     const fetchMetals = async () => {
         try {
@@ -110,9 +117,9 @@ const ProductsDetails = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error("Error fetching metals:", err);
+            console.error('Error fetching metals:', err);
         }
-    }
+    };
 
     const fetchStoneShape = async () => {
         try {
@@ -123,9 +130,9 @@ const ProductsDetails = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error("Error fetching stone shape:", err);
+            console.error('Error fetching stone shape:', err);
         }
-    }
+    };
 
     const fetchgoldPurity = async () => {
         try {
@@ -136,9 +143,9 @@ const ProductsDetails = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error("Error fetching gold purity:", err);
+            console.error('Error fetching gold purity:', err);
         }
-    }
+    };
 
     useEffect(() => {
         fetchCategory();
@@ -146,12 +153,11 @@ const ProductsDetails = () => {
         fetchMetals();
         fetchStoneShape();
         fetchgoldPurity();
-    }, [])
+    }, []);
 
     // Remove duplicates from arrays to prevent key conflicts
-    const uniqueMetalIds = [...new Set((formData.metalId || []).filter(id => id != null))];
-    const uniqueGoldPurityIds = [...new Set((formData.goldPurityId || []).filter(id => id != null))];
-    console.log("🚀 ~ ProductsDetails ~ uniqueGoldPurityIds:", uniqueGoldPurityIds)
+    const uniqueMetalIds = [...new Set((formData.metalId || []).filter((id) => id != null))];
+    const uniqueGoldPurityIds = [...new Set((formData.goldPurityId || []).filter((id) => id != null))];
 
     return (
         <>
@@ -160,7 +166,7 @@ const ProductsDetails = () => {
                     <div className="row">
                         <div className="d-flex align-items-center justify-content-between gap-3">
                             <h2 className="d-flex mb-0 title">
-                                <div className='pe-4' style={{ cursor: 'pointer' }} onClick={() => navigate(-1)}>
+                                <div className="pe-4" style={{ cursor: 'pointer' }} onClick={() => navigate(-1)}>
                                     <img src={left} alt="" style={{ height: '30px' }} />
                                 </div>
                                 <div>Product Detail</div>
@@ -175,7 +181,6 @@ const ProductsDetails = () => {
                             </div>
                         ) : (
                             <form className="form row g-3 gx-4">
-
                                 <p>1. Basic Product Information</p>
 
                                 {/* Stock Number */}
@@ -185,7 +190,7 @@ const ProductsDetails = () => {
                                         type="text"
                                         id="stockNumber"
                                         className="form-control"
-                                        value={formData?.stockNumber || "-"}
+                                        value={formData?.stockNumber || '-'}
                                         readOnly
                                     />
                                 </div>
@@ -198,7 +203,7 @@ const ProductsDetails = () => {
                                         name="title"
                                         id="title"
                                         className="form-control"
-                                        value={formData.title || "-"}
+                                        value={formData.title || '-'}
                                         readOnly
                                     />
                                 </div>
@@ -212,7 +217,7 @@ const ProductsDetails = () => {
                                         name="categoryId"
                                         id="categoryId"
                                         className="form-select"
-                                        value={formData.categoryId || ""}
+                                        value={formData.categoryId || ''}
                                         disabled
                                     >
                                         <option value="">-- Select Category --</option>
@@ -233,7 +238,7 @@ const ProductsDetails = () => {
                                         name="subCategoryId"
                                         id="subCategoryId"
                                         className="form-select"
-                                        value={formData.subCategoryId || ""}
+                                        value={formData.subCategoryId || ''}
                                         disabled
                                     >
                                         <option value="">-- Select Sub Category --</option>
@@ -284,7 +289,6 @@ const ProductsDetails = () => {
                                         )}
                                     </div>
                                 </div>
-                                        
 
                                 {/* stoneShape Select */}
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
@@ -295,7 +299,7 @@ const ProductsDetails = () => {
                                         name="stoneShapeId"
                                         id="stoneShapeId"
                                         className="form-select"
-                                        value={formData.stoneShapeId || ""}
+                                        value={formData.stoneShapeId || ''}
                                         disabled
                                     >
                                         <option value="">-- Select Stone Shape --</option>
@@ -316,7 +320,7 @@ const ProductsDetails = () => {
                                         name="diamondCut"
                                         id="diamondCut"
                                         className="form-select"
-                                        value={formData.diamondCut || ""}
+                                        value={formData.diamondCut || ''}
                                         disabled
                                     >
                                         <option value="">-- Select Diamond Cut --</option>
@@ -327,76 +331,84 @@ const ProductsDetails = () => {
                                 </div>
 
                                 <p className='mt-5'>3. Pricing & Stock</p>
-
-                                {/* Pricing Details */}
                                 <div className="col-12 mb-2">
-                                    <label className="form-label">Pricing Details:</label>
+                                    <label htmlFor="price" className="form-label">
+                                        Pricing Details:
+                                    </label>
+
+                                    {/* Show selected goldPurity with price details */}
                                     {formData.purity?.length > 0 ? (
                                         <div className="mt-2">
-                                            {formData.purity.map((purityItem, index) => (
-                                                <div key={`purity-card-${purityItem.id}-${index}`} className="card mb-3">
-                                                    <div className="card-header">
-                                                        <strong>{purityItem.name} Purity</strong>
+                                            <div className="d-flex flex-wrap gap-2 mb-2">
+                                                {formData.purity.map((item) => (
+                                                    <span
+                                                        key={`purity-${item.value}`}
+                                                        className={`badge p-2 fs-6 ${activePurityTab === item.value ? 'bg-success' : 'bg-primary'}`}
+                                                        style={{ cursor: 'pointer', minWidth: '50px', textAlign: 'center' }}
+                                                        onClick={() => setActivePurityTab(activePurityTab === item.value ? null : item.value)}
+                                                    >
+                                                        {item.name || `Purity ${item.value}`}
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            {/* Display details for active purity tab */}
+                                            {activePurityTab && formData.purity.find((p) => p.value === activePurityTab) && (
+                                                <div className="row">
+                                                    <div className="col-lg-3 col-md-6 col-12">
+                                                        <label className="form-label">Original Price (Optional) :</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control mb-2"
+                                                            value={formData.purity.find((p) => p.value === activePurityTab)?.original_price || '-'}
+                                                            readOnly
+                                                        />
                                                     </div>
-                                                    <div className="card-body">
-                                                        <div className="row">
-                                                            <div className="col-md-3">
-                                                                <label className="form-label">Original Price (Optional) </label>
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    value={purityItem.original_price || "-"}
-                                                                    readOnly
-                                                                />
-                                                            </div>
-                                                            <div className="col-md-3">
-                                                                <label className="form-label">Selling Price</label>
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    value={purityItem.selling_price || "-"}
-                                                                    readOnly
-                                                                />
-                                                            </div>
-                                                            <div className="col-md-3">
-                                                                <label className="form-label">Profit</label>
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    value={purityItem.profit || "-"}
-                                                                    readOnly
-                                                                />
-                                                            </div>
-                                                            <div className="col-md-3">
-                                                                <label className="form-label">GST</label>
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    value={purityItem.gst || "-"}
-                                                                    readOnly
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="row mt-3">
-                                                            <div className="col-12">
-                                                                <h6>Calculations:</h6>
-                                                                <div className="d-flex justify-content-between">
-                                                                    <span>Profit Amount:</span>
-                                                                    <span>{purityItem.profitsellingprice || "-"}</span>
-                                                                </div>
-                                                                <div className="d-flex justify-content-between">
-                                                                    <span>GST Amount:</span>
-                                                                    <span>{purityItem.gstAmount || "-"}</span>
-                                                                </div>
-                                                                <div className="d-flex justify-content-between">
-                                                                    <strong>Total Amount:</strong>
-                                                                    <strong>{purityItem.gstPrice || "-"}</strong>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                    <div className="col-lg-3 col-md-6 col-12">
+                                                        <label className="form-label">Selling Price :</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control mb-2"
+                                                            value={formData.purity.find((p) => p.value === activePurityTab)?.selling_price || '-'}
+                                                            readOnly
+                                                        />
+                                                    </div>
+                                                    <div className="col-lg-3 col-md-6 col-12">
+                                                        <label className="form-label">Profit :</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control mb-2"
+                                                            value={formData.purity.find((p) => p.value === activePurityTab)?.profit || '-'}
+                                                            readOnly
+                                                        />
+                                                    </div>
+                                                    <div className="col-lg-3 col-md-6 col-12">
+                                                        <label className="form-label">GST :</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control mb-2"
+                                                            value={formData.purity.find((p) => p.value === activePurityTab)?.gst || '-'}
+                                                            readOnly
+                                                        />
+                                                    </div>
+
+                                                    {/* Totals for this active purity */}
+                                                    <div className="col-12 mt-3">
+                                                        <h5 className='d-flex justify-content-between mb-3'>
+                                                            <strong>Profit Amount (Selling Price + Profit Margin): </strong>
+                                                            {formData.purity.find((p) => p.value === activePurityTab)?.profitsellingprice || '-'}
+                                                        </h5>
+                                                        <h5 className='d-flex justify-content-between mb-4'>
+                                                            <strong>GST Amount (Profit Amount * GST): </strong>
+                                                            {formData.purity.find((p) => p.value === activePurityTab)?.gstAmount || '-'}
+                                                        </h5>
+                                                        <h5 className='d-flex justify-content-between mb-2'>
+                                                            <strong>Total Amount (Profit Amount + GST): </strong>
+                                                            {formData.purity.find((p) => p.value === activePurityTab)?.gstPrice || '-'}
+                                                        </h5>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
                                     ) : (
                                         <span className="text-muted">No pricing details available</span>
@@ -405,72 +417,77 @@ const ProductsDetails = () => {
 
                                 <p className='mt-5'>4. Product Images & Media</p>
 
-                                {/* Metal-wise Images */}
+                                {/* Metal-wise Images and Videos */}
                                 <div className="col-12 mb-2">
-                                    <label className="form-label">Images by Metal:</label>
+                                    <label className="form-label">Media by Metal:</label>
                                     {formData.media?.length > 0 ? (
-                                        formData.media.map((mediaItem, index) => (
-                                            <div key={`media-container-${mediaItem.id}-${index}`} className="card mb-3">
-                                                <div className="card-header">
-                                                    <strong>{mediaItem.name} Images</strong>
-                                                </div>
-                                                <div className="card-body">
-                                                    <div className="d-flex flex-wrap gap-2">
-                                                        {mediaItem.images?.length > 0 ? (
-                                                            mediaItem.images.map((img, i) => (
-                                                                <img
-                                                                    key={`media-image-${mediaItem.id}-${i}`}
-                                                                    src={img}
-                                                                    alt={`${mediaItem.name} ${i + 1}`}
-                                                                    onClick={() => handleOpen(img)}
-                                                                    className="img-thumbnail"
-                                                                    style={{
-                                                                        width: "80px",
-                                                                        height: "80px",
-                                                                        objectFit: "cover",
-                                                                        cursor: "pointer"
-                                                                    }}
-                                                                />
-                                                            ))
+                                        <div className="mt-2">
+                                            <div className="d-flex flex-wrap gap-2 mb-2">
+                                                {formData.media.map((mediaItem) => (
+                                                    <span
+                                                        key={`metal-tab-${mediaItem.id}`}
+                                                        className={`badge p-2 fs-6 ${activeMetalTab === mediaItem.id ? 'bg-success' : 'bg-primary'}`}
+                                                        style={{ cursor: 'pointer', minWidth: '60px', textAlign: 'center' }}
+                                                        onClick={() => setActiveMetalTab(activeMetalTab === mediaItem.id ? null : mediaItem.id)}
+                                                    >
+                                                        {mediaItem.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            {/* Display media for active metal tab */}
+                                            {activeMetalTab && formData.media.find((m) => m.id === activeMetalTab) && (
+                                                <div className="row">
+                                                    {/* Images */}
+                                                    <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                                        <label className="form-label">Images :</label>
+                                                        {formData.media.find((m) => m.id === activeMetalTab)?.images?.length > 0 ? (
+                                                            <div className="d-flex flex-wrap gap-2 mt-2">
+                                                                {formData.media
+                                                                    .find((m) => m.id === activeMetalTab)
+                                                                    ?.images.map((img, i) => (
+                                                                        <img
+                                                                            key={`image-${activeMetalTab}-${i}`}
+                                                                            src={img}
+                                                                            alt={`${formData.media.find((m) => m.id === activeMetalTab)?.name} ${i + 1}`}
+                                                                            onClick={() => handleOpen(img)}
+                                                                            className="img-thumbnail"
+                                                                            style={{
+                                                                                width: '80px',
+                                                                                height: '80px',
+                                                                                objectFit: 'cover',
+                                                                                cursor: 'pointer',
+                                                                            }}
+                                                                        />
+                                                                    ))}
+                                                            </div>
                                                         ) : (
                                                             <span className="text-muted">No images available</span>
                                                         )}
                                                     </div>
+
+                                                    {/* Video */}
+                                                    <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                                        <label className="form-label">Video (Optional) :</label>
+                                                        {formData.media.find((m) => m.id === activeMetalTab)?.videos?.length > 0 ? (
+                                                            <div className="mt-2 position-relative" style={{ width: '320px' }}>
+                                                                <video
+                                                                    width="320"
+                                                                    height="180"
+                                                                    controls
+                                                                    src={formData.media.find((m) => m.id === activeMetalTab)?.videos[0]}
+                                                                    className="rounded border"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-muted">No video available</div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))
+                                            )}
+                                        </div>
                                     ) : (
                                         <span className="text-muted">No media available</span>
-                                    )}
-                                </div>
-
-                                {/* Videos */}
-                                <div className="col-12 mb-2">
-                                    <label className="form-label">Videos :</label>
-                                    {formData.media?.some(media => media.videos?.length > 0) ? (
-                                        formData.media.map((mediaItem, index) => (
-                                            mediaItem.videos?.length > 0 && (
-                                                <div key={`video-container-${mediaItem.id}-${index}`} className="card mb-3">
-                                                    <div className="card-header">
-                                                        <strong>{mediaItem.name} Video</strong>
-                                                    </div>
-                                                    <div className="card-body">
-                                                        {mediaItem.videos.map((video, i) => (
-                                                            <video
-                                                                key={`video-player-${mediaItem.id}-${i}`}
-                                                                width="320"
-                                                                height="180"
-                                                                controls
-                                                                src={video}
-                                                                className="rounded border"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )
-                                        ))
-                                    ) : (
-                                        <div className="text-muted">No videos available</div>
                                     )}
                                 </div>
 
@@ -486,7 +503,7 @@ const ProductsDetails = () => {
                                         name="shortDescription"
                                         id="shortDescription"
                                         className="form-control"
-                                        value={formData.shortDescription || "-"}
+                                        value={formData.shortDescription || '-'}
                                         readOnly
                                     />
                                 </div>
@@ -497,7 +514,7 @@ const ProductsDetails = () => {
                                         Description (Optional) :
                                     </label>
                                     <Editor
-                                        value={formData.description || ""}
+                                        value={formData.description || ''}
                                         readOnly
                                         style={{ height: '320px' }}
                                     />
@@ -513,14 +530,14 @@ const ProductsDetails = () => {
                                                     type="text"
                                                     placeholder="Name"
                                                     className="form-control"
-                                                    value={name || "-"}
+                                                    value={name || '-'}
                                                     readOnly
                                                 />
                                                 <input
                                                     type="text"
                                                     placeholder="Value"
                                                     className="form-control"
-                                                    value={value || "-"}
+                                                    value={value || '-'}
                                                     readOnly
                                                 />
                                             </div>
@@ -529,7 +546,6 @@ const ProductsDetails = () => {
                                         <div className="text-muted">No product materials available</div>
                                     )}
                                 </div>
-
 
                                 <p className='mt-5'>6. Product Status & Flags</p>
 
@@ -543,7 +559,7 @@ const ProductsDetails = () => {
                                         name="estimatedTime"
                                         id="estimatedTime"
                                         className="form-control"
-                                        value={formData.estimatedTime || "-"}
+                                        value={formData.estimatedTime || '-'}
                                         readOnly
                                     />
                                 </div>
@@ -660,7 +676,6 @@ const ProductsDetails = () => {
                                         </div>
                                     </div>
                                 </div>
-
                             </form>
                         )}
                     </div>
@@ -677,7 +692,7 @@ const ProductsDetails = () => {
                             src={selectedImage}
                             alt="Preview"
                             className="img-fluid rounded"
-                            style={{ maxHeight: "500px", objectFit: "contain" }}
+                            style={{ maxHeight: '500px', objectFit: 'contain' }}
                         />
                     ) : (
                         <span className="text-muted">No image selected</span>
@@ -685,7 +700,7 @@ const ProductsDetails = () => {
                 </Modal.Body>
             </Modal>
         </>
-    )
-}
+    );
+};
 
-export default ProductsDetails
+export default ProductsDetails;

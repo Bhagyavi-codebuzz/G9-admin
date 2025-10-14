@@ -26,7 +26,6 @@ const BlogEdit = () => {
             title: editBlog?.title,
             description: editBlog?.description
         });
-        console.log("Rules data:", editBlog.rules);
 
         if (editBlog.image) {
             const isFullUrl = editBlog.image.startsWith("http");
@@ -78,7 +77,6 @@ const BlogEdit = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error(err);
             if (err.response?.status === 400) {
                 toast.error(err.response.data.message);
             }

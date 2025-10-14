@@ -14,7 +14,6 @@ const TotalItems = () => {
     const location = useLocation();
     const [totalItems, setTotalItems] = useState(location.state?.items || {});
     const { id } = useParams();
-    console.log(totalItems, "=-=-=-=-= totalItems =-=--=-=-=-=-=", id, "-=-=-=- id =--=-")
 
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
@@ -148,7 +147,6 @@ const TotalItems = () => {
                                     toast.error(res.data?.message);
                                 }
                             } catch (error) {
-                                console.error(error);
                                 toast.error("Error updating status");
                             }
                         }}

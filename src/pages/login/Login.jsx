@@ -38,7 +38,6 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Form Data:", formData);
         setLoading(true);
 
         try {

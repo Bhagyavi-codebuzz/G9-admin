@@ -8,7 +8,8 @@ import { apiendpoints } from '../../componet/constants/apiroutes'
 import Delete from '../../componet/modal/delete/Delete';
 import { CreatedDate } from '../../componet/helper/DateTimeUtils';
 
-const Media = () => {
+const Certificate = () => {
+
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [error, setError] = useState(null);
@@ -20,25 +21,25 @@ const Media = () => {
     const [isDeleteLoading, setIsDeleteLoading] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
 
-    const [media, setMedia] = useState([]);
+    const [certificate, setCertificate] = useState([]);
 
     const [modalShow, setModalShow] = useState({
-        deletemedia: false,
+        deletecertificate: false,
     });
 
     const handleClose = () => {
         setModalShow({
-            deletemedia: false,
+            deletecertificate: false,
         });
     }
 
-    const filtermedia = (media || []).filter((i) => {
+    const filterblog = (certificate || []).filter((i) => {
         const searchstr = `${i.title}`.toLowerCase();
         return searchstr.includes(search.toLowerCase());
     });
 
     const startIndex = (currentPage - 1) * perPage;
-    const currentPageData = filtermedia.slice(startIndex, startIndex + perPage);
+    const currentPageData = filterblog.slice(startIndex, startIndex + perPage);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -53,7 +54,7 @@ const Media = () => {
         {
             name: 'No.',
             selector: (_, index) => (currentPage - 1) * perPage + (index + 1),
-            width: '80px',
+            width: '70px',
             style: {
                 margin: '10px 0'
             }
@@ -82,36 +83,35 @@ const Media = () => {
                 <div
                     style={{
                         display: "-webkit-box",
-                        WebkitLineClamp: 2,   // 👈 only 2 lines
+                        WebkitLineClamp: 2,   
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        whiteSpace: "normal", // allow wrapping
+                        whiteSpace: "normal", 
                     }}
                 >
                     {row.title || "-"}
                 </div>
             ),
-            width: "13%",
+            width: "16%",
         },
         {
-            name: 'Description',
+            name: 'Sub Title',
             cell: (row) => (
                 <div
                     style={{
                         display: "-webkit-box",
-                        WebkitLineClamp: 2,   // 👈 only 2 lines
+                        WebkitLineClamp: 2,  
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        whiteSpace: "normal", // allow wrapping
+                        whiteSpace: "normal", 
                     }}
-                    dangerouslySetInnerHTML={{ __html: row.description || "-" }}
+                    dangerouslySetInnerHTML={{ __html: row.subTitle || "-" }}
                 >
-
                 </div>
             ),
-            width: "28%",
+            width: "20%",
         },
         {
             name: 'Created Date',
@@ -119,7 +119,7 @@ const Media = () => {
                 CreatedDate(row.createdAt) || "-"
             ),
             minwidth: "80px",
-            width: "15%"
+            width: "17%"
         },
         {
             name: 'Action',
@@ -128,7 +128,7 @@ const Media = () => {
                 <div className="d-flex align-items-center">
                     <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
                         onClick={() => {
-                            navigate(`/admin/media-details/${row?.id}`);
+                            navigate(`/admin/certificate-details/${row?.id}`);
                         }}
                     >
                         <FaEye />
@@ -136,7 +136,7 @@ const Media = () => {
 
                     <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
                         onClick={() => {
-                            navigate(`/admin/media-edit`, { state: { media: row } });
+                            navigate(`/admin/certificate-edit`, { state: { certificate: row } });
                         }}
                     >
                         <FaEdit />
@@ -144,7 +144,7 @@ const Media = () => {
 
                     <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon border"
                         onClick={() => {
-                            setModalShow({ ...modalShow, deletemedia: true });
+                            setModalShow({ ...modalShow, deletecertificate: true });
                             setDeleteId(row?.id);
                         }}
                     >
@@ -156,14 +156,14 @@ const Media = () => {
         },
     ];
 
-    const fetchMedia = async () => {
+    const fetchCertificate = async () => {
         setLoader(true);
 
         try {
-            const res = await Axios.get(`${apiendpoints.media}`, authorizationHeaders());
+            const res = await Axios.get(`${apiendpoints.certificate}`, authorizationHeaders());
 
             if (res.data?.status) {
-                setMedia(res.data?.data || []);
+                setCertificate(res.data?.data || []);
             }
             else {
                 toast.error(res.data?.message);
@@ -185,35 +185,33 @@ const Media = () => {
     }
 
     useEffect(() => {
-        fetchMedia();
+        fetchCertificate();
     }, [])
 
     const handleDelete = async () => {
         setIsDeleteLoading(true);
 
         try {
-            const res = await Axios.delete(apiendpoints.deleteMedia.replace(":id", deleteId), authorizationHeaders());
+            const res = await Axios.delete(apiendpoints.deleteCertificate.replace(":id", deleteId), authorizationHeaders());
 
             if (res.data?.status) {
                 toast.success(res.data?.message);
 
                 handleClose();
-                fetchMedia();
+                fetchCertificate();
 
-                setMedia((prev) => prev.filter((i) => i.id !== deleteId));
+                setCertificate((prev) => prev.filter((i) => i.id !== deleteId));
             }
             else {
                 toast.error(res.data?.message);
             }
 
         } catch (err) {
-            console.error("Delete-Blog-Error++", err);
+            console.error("Delete-Certificate-Error++", err);
         } finally {
             setIsDeleteLoading(false);
         }
     }
-
-
     return (
         <>
             <section className="categorylist-section mt-4 mt-lg-4 mt-xl-5">
@@ -223,11 +221,11 @@ const Media = () => {
                             <div className="card-header">
                                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
                                     <h3 className="mb-0 page-title">
-                                        Media
+                                        Certificate
                                     </h3>
                                     <button className="add-btn boreder-0" type="button"
-                                        onClick={() => navigate("/admin/addmedia")}>
-                                        + Add Media
+                                        onClick={() => navigate("/admin/addcertificate")}>
+                                        + Add Certificate
                                     </button>
                                 </div>
                             </div>
@@ -262,7 +260,7 @@ const Media = () => {
                                             columns={columns}
                                             currentPageData={currentPageData}
                                             loader={loader}
-                                            filterDataLength={filtermedia.length || 0}
+                                            filterDataLength={filterblog.length || 0}
 
 
                                             // ✅ real total from API
@@ -280,9 +278,9 @@ const Media = () => {
             </section>
 
             {/* Delete-Company Modal */}
-            <Delete show={modalShow.deletemedia} handleClose={handleClose} isDeleteLoading={isDeleteLoading} handleDelete={handleDelete} role={"media"} />
+            <Delete show={modalShow.deletecertificate} handleClose={handleClose} isDeleteLoading={isDeleteLoading} handleDelete={handleDelete} role={"Certificate"} />
         </>
     )
 }
 
-export default Media
+export default Certificate

@@ -38,7 +38,6 @@ const ProductsEdit = () => {
     const location = useLocation();
     const [editProducts, setEditProducts] = useState(location.state?.products || {});
     const [formData, setFormData] = useState(initialState);
-    console.log("🚀 ~ ProductsEdit ~ formData:", formData)
     const [loader, setLoader] = useState(false);
     const [loading, setLoading] = useState(false);
     const [category, setCategory] = useState([]);
@@ -64,7 +63,6 @@ const ProductsEdit = () => {
                     : editProducts.metals;
             }
         } catch (err) {
-            console.error("Error parsing metals:", err);
             metalsArray = [];
         }
 
@@ -88,7 +86,6 @@ const ProductsEdit = () => {
                     }));
                 }
             } catch (err) {
-                console.error("Error parsing productMaterials:", err);
                 materials = [];
             }
         }
@@ -279,7 +276,6 @@ const ProductsEdit = () => {
                     return; // Don't remove from state if API fails
                 }
             } catch (err) {
-                console.error("Error deleting image:", err);
                 toast.error("Error deleting image");
                 return;
             }
@@ -333,7 +329,6 @@ const ProductsEdit = () => {
                     return;
                 }
             } catch (err) {
-                console.error("Error deleting video:", err);
                 toast.error("Error deleting video");
                 return;
             }
@@ -543,7 +538,6 @@ const ProductsEdit = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Before submit:", formData);
 
         const requiredFields = [
             "stockNumber", "estimatedTime",
@@ -701,7 +695,7 @@ const ProductsEdit = () => {
 
                         // Append only NEW video (File object)
                         if (metalData.video?.isNew && metalData.video.file) {
-                            mediaForm.append("video", metalData.video.file);
+                            mediaForm.append("image", metalData.video.file);
                         }
 
                         // Only call API if there are actual files to upload
@@ -717,12 +711,12 @@ const ProductsEdit = () => {
                                 );
 
                                 if (mediaRes.data?.status) {
-                                    toast.success(`Media updated for metal ID ${metalId}`);
+                                    toast.success(mediaRes.data?.message);
                                 } else {
-                                    toast.error(`Failed to update media for metal ID ${metalId}`);
+                                    toast.error(mediaRes.data?.message);
                                 }
                             } catch (mediaErr) {
-                                console.error(`Error updating media for metal ID ${metalId}:`, mediaErr);
+                                console.error(mediaRes.data?.message);
                             }
                         }
                     }
@@ -733,7 +727,6 @@ const ProductsEdit = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error(err);
             if (err.response?.status === 400) {
                 toast.error(err.response.data.message);
             } else {
@@ -1046,7 +1039,6 @@ const ProductsEdit = () => {
                                                         <label className="form-label">Selling Price :</label>
                                                         <input
                                                             type="text"
-                                                            required
                                                             className="form-control mb-2"
                                                             placeholder={`Enter selling price`}
                                                             value={formData.selling_price?.[activeGoldPurityId] || ""}
@@ -1066,7 +1058,6 @@ const ProductsEdit = () => {
                                                         <label className="form-label">Profit Percentage :</label>
                                                         <input
                                                             type="text"
-                                                            required
                                                             className="form-control mb-2"
                                                             placeholder={`Enter profit percentage`}
                                                             value={formData.profit?.[activeGoldPurityId] || ""}
@@ -1086,7 +1077,6 @@ const ProductsEdit = () => {
                                                         <label className="form-label">GST :</label>
                                                         <input
                                                             type="text"
-                                                            required
                                                             className="form-control mb-2"
                                                             placeholder={`Enter GST`}
                                                             value={formData.gst?.[activeGoldPurityId] || ""}
@@ -1223,7 +1213,7 @@ const ProductsEdit = () => {
 
                                                     {/* Video Upload */}
                                                     <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                                        <label htmlFor="video" className="form-label">Upload Video :</label>
+                                                        <label htmlFor="video" className="form-label">Upload Video (Optional) :</label>
                                                         <input
                                                             type="file"
                                                             accept="video/mp4,video/webm,video/ogg"

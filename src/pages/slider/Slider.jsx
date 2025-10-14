@@ -106,7 +106,6 @@ const Slider = () => {
             onClick={() => {
               setModalShow({ ...modalShow, deleteslider: true });
               setDeleteId(row?.id);
-              console.log(deleteId)
             }}
           >
             <FaTrash />

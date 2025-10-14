@@ -17,7 +17,6 @@ const AddPolicy = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(formData)
         setLoading(true);
 
         try {

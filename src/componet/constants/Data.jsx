@@ -18,6 +18,11 @@ export const SidebarData = [
         route: "/admin/offerbar",
     },
     {
+        label: "Festival Offer",
+        icon: <SliderIcon />,
+        route: "/admin/festival",
+    },
+    {
         label: "Banners",
         icon: <SliderIcon />,
         route: "/admin/slider",
@@ -61,6 +66,11 @@ export const SidebarData = [
     //     route: "/admin/category",
     // },
     {
+        label: "Certificate",
+        icon: <BlogIcon />,
+        route: "/admin/certificate",
+    },
+    {
         label: "Blogs",
         icon: <BlogIcon />,
         route: "/admin/blog",
@@ -74,6 +84,11 @@ export const SidebarData = [
         label: "FAQ's",
         icon: <FAQIcon />,
         route: "/admin/faq",
+    },
+    {
+        label: "Settings",
+        icon: <FAQIcon />,
+        route: "/admin/settings",
     },
     {
         label: "Help & Support",

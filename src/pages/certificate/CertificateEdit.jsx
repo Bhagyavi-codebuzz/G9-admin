@@ -4,34 +4,54 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import left from "../../assets/Images/lefticon.png";
 import { toast } from 'react-toastify';
 import { loaders } from '../../componet/loader/Loader';
-import { authorizationHeaders, authorizationHeadersImage, Axios } from '../../componet/helper/Axios';
+import { authorizationHeadersImage, Axios } from '../../componet/helper/Axios';
 import { apiendpoints } from '../../componet/constants/apiroutes';
-
 const initialState = {
-    text: ""
+    title: "",
+    subTitle: '',
+    certificate: null
+
 }
 
-const OfferbarEdit = () => {
+const CertificateEdit = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [editofferbar, setEditofferbar] = useState(location.state?.offerbar || {});
+    const [editBlog, setEditBlog] = useState(location.state?.certificate || {});
+    const [imageShow, setImageShow] = useState(editBlog.image);
     const [formData, setFormData] = useState(initialState);
     const [loader, setLoader] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setFormData({
-            text: editofferbar?.text
+            title: editBlog?.title,
+            subTitle: editBlog?.subTitle
         });
 
-    }, [editofferbar]);
+        if (editBlog.image) {
+            const isFullUrl = editBlog.image.startsWith("http");
+            setImageShow(
+                isFullUrl ? editBlog.image : `${process.env.REACT_APP_BASE_URL}/uploads/${editBlog.image}`
+            );
+        }
+
+    }, [editBlog]);
+
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value.trimStart(),
-        }));
+        if (files && files[0]) {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: files[0],
+            }));
+            setImageShow(URL.createObjectURL(files[0])); // 👈 preview new image
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value.trimStart(),
+            }));
+        }
     };
 
 
@@ -40,18 +60,20 @@ const OfferbarEdit = () => {
         setLoading(true);
         try {
             const form = new FormData();
-            form.append("text", formData.text);
+            form.append("title", formData.title);
+            form.append("certificate", formData.certificate);
+            form.append("subTitle", formData.subTitle);
 
             const res = await Axios.post(
-                apiendpoints.editOfferbar.replace(":id", editofferbar.id),
+                apiendpoints.editCertificate.replace(":id", editBlog.id),
                 form,
-                authorizationHeaders()
+                authorizationHeadersImage()
             );
 
             if (res.data?.status) {
                 toast.success(res.data?.message);
                 setFormData(initialState);
-                navigate("/admin/offerbar");
+                navigate("/admin/certificate");
             } else {
                 toast.error(res.data?.message);
             }
@@ -74,7 +96,7 @@ const OfferbarEdit = () => {
                                     <img src={left} alt="" style={{ height: '30px' }} />
                                 </div>
                                 <div>
-                                    Offer Bar Edit
+                                    Certificate Edit
                                 </div>
                             </h2>
                         </div>
@@ -89,19 +111,61 @@ const OfferbarEdit = () => {
                         ) : (
                             <form className="row g-3"
                                 onSubmit={handleSubmit}>
-
                                 <div className="col-12 mb-2">
-                                    <label htmlFor="text" className="form-label">
+                                    <label htmlFor="image" className="form-label">
+                                        Image :
+                                    </label>
+                                    <input
+                                        type="file"
+                                        name="certificate"
+                                        id="image"
+                                        className="form-control"
+                                        onChange={handleChange}
+                                        accept="image/jpeg,image/jpg,image/png,image/gif"
+                                    />
+                                    {imageShow && (
+                                        <div className="mb-2 mt-2">
+                                            <img
+                                                src={imageShow}
+                                                alt="Image"
+                                                className="img-thumbnail img-fluid"
+                                                style={{
+                                                    maxWidth: "150px", maxHeight: "150px"
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                    <label htmlFor="title" className="form-label">
                                         Title :
                                     </label>
                                     <input
                                         type="text"
-                                        name="text"
-                                        id="txet"
+                                        name="title"
+                                        id="title"
                                         className="form-control"
                                         placeholder="Enter Title"
                                         autoComplete='off'
-                                        value={formData.text}
+                                        value={formData.title}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                    <label htmlFor="subTitle" className="form-label">
+                                        Sub Title :
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="subTitle"
+                                        id="subTitle"
+                                        className="form-control"
+                                        placeholder="Enter Title"
+                                        autoComplete='off'
+                                        value={formData.subTitle}
                                         onChange={handleChange}
                                         required
                                     />
@@ -131,4 +195,4 @@ const OfferbarEdit = () => {
     )
 }
 
-export default OfferbarEdit
+export default CertificateEdit

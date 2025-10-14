@@ -56,7 +56,6 @@ const StoneShapeEdit = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error(err);
             if (err.response?.status === 400) {
                 toast.error(err.response.data.message);
             }

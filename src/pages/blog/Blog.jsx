@@ -145,7 +145,6 @@ const Blog = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deleteblog: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
                         }}
                     >
                         <FaTrash />

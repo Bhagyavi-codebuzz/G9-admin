@@ -251,7 +251,6 @@ const Order = () => {
                 toast.error(res.data?.message || "Something went wrong!");
             }
         } catch (err) {
-            console.error("Export-CSV-Error++", err);
             toast.error("Failed to export data");
         }
     };
@@ -321,7 +320,6 @@ const Order = () => {
                 toast.error(res.data?.message || "Failed to fetch data");
             }
         } catch (err) {
-            console.error("Filter-API-Error++", err);
             toast.error("Failed to fetch data");
         }
     };

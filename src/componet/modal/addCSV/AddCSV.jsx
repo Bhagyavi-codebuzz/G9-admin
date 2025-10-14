@@ -9,7 +9,6 @@ const AddCSV = ({ show, handleClose, fetchProducts }) => {
     const [isUploading, setIsUploading] = useState(false);
 
     const handleFileChange = (e) => {
-        console.log("Selected file:", e.target.files[0]);
         setFile(e.target.files[0]);
     };
 
@@ -23,13 +22,11 @@ const AddCSV = ({ show, handleClose, fetchProducts }) => {
         formData.append("file", file);
 
         // Debug
-        console.log("File name:", file?.name);
         for (let [key, value] of formData.entries()) {
-            console.log(`${key}:`, value);
+            
         }
 
 
-        // console.log(formData)
 
 
         try {

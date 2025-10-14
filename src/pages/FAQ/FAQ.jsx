@@ -151,7 +151,6 @@ const FAQ = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deletefaq: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
                         }}
                     >
                         <FaTrash />
@@ -171,7 +170,6 @@ const FAQ = () => {
 
             if (res.data?.status) {
                 setfaq(res.data?.data || []);
-                console.log(registerUser)
             }
             else {
                 toast.error(res.data?.message);

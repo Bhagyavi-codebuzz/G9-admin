@@ -114,7 +114,6 @@ const Metals = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deletemetal: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
                         }}
                     >
                         <FaTrash />

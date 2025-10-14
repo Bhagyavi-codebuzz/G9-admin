@@ -8,7 +8,7 @@ import { apiendpoints } from '../../componet/constants/apiroutes'
 import Delete from '../../componet/modal/delete/Delete';
 import { CreatedDate } from '../../componet/helper/DateTimeUtils';
 
-const Media = () => {
+const Festival = () => {
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [error, setError] = useState(null);
@@ -20,25 +20,25 @@ const Media = () => {
     const [isDeleteLoading, setIsDeleteLoading] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
 
-    const [media, setMedia] = useState([]);
+    const [festival, setFestival] = useState([]);
 
     const [modalShow, setModalShow] = useState({
-        deletemedia: false,
+        deletefestival: false,
     });
 
     const handleClose = () => {
         setModalShow({
-            deletemedia: false,
+            deletefestival: false,
         });
     }
 
-    const filtermedia = (media || []).filter((i) => {
+    const filterslider = (festival || []).filter((i) => {
         const searchstr = `${i.title}`.toLowerCase();
         return searchstr.includes(search.toLowerCase());
     });
 
     const startIndex = (currentPage - 1) * perPage;
-    const currentPageData = filtermedia.slice(startIndex, startIndex + perPage);
+    const currentPageData = filterslider.slice(startIndex, startIndex + perPage);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -66,85 +66,45 @@ const Media = () => {
                     alt="Image"
                     className={`${row.image === null && 'rounded-circle'}`}
                     style={{
-                        maxHeight: "80px",
-                        maxWidth: "80px",
-                        width: "100%",
-                        height: "100%",
+                        maxWidth: "100px",
+                        maxHeight: "100px",
                         padding: '8px 0',
                     }}
                 />
             ),
-            width: "140px",
-        },
-        {
-            name: 'Title',
-            cell: (row) => (
-                <div
-                    style={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,   // 👈 only 2 lines
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "normal", // allow wrapping
-                    }}
-                >
-                    {row.title || "-"}
-                </div>
-            ),
-            width: "13%",
-        },
-        {
-            name: 'Description',
-            cell: (row) => (
-                <div
-                    style={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,   // 👈 only 2 lines
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "normal", // allow wrapping
-                    }}
-                    dangerouslySetInnerHTML={{ __html: row.description || "-" }}
-                >
-
-                </div>
-            ),
-            width: "28%",
+            maxwidth: "200px",
         },
         {
             name: 'Created Date',
             cell: (row) => (
                 CreatedDate(row.createdAt) || "-"
             ),
-            minwidth: "80px",
-            width: "15%"
+            minwidth: "100px",
         },
         {
             name: 'Action',
             cell: (row) =>
             (
                 <div className="d-flex align-items-center">
-                    <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
-                        onClick={() => {
-                            navigate(`/admin/media-details/${row?.id}`);
-                        }}
-                    >
-                        <FaEye />
-                    </button>
+                    {/* <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
+            onClick={() => {
+              navigate(`/admin/blog-details/${row?.id}`);
+            }}
+          >
+            <FaEye />
+          </button> */}
 
-                    <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
-                        onClick={() => {
-                            navigate(`/admin/media-edit`, { state: { media: row } });
-                        }}
-                    >
-                        <FaEdit />
-                    </button>
+                    {/* <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
+            onClick={() => {
+              navigate(`/admin/blog-edit`, { state: { blog: row } });
+            }}
+          >
+            <FaEdit />
+          </button> */}
 
                     <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon border"
                         onClick={() => {
-                            setModalShow({ ...modalShow, deletemedia: true });
+                            setModalShow({ ...modalShow, deletefestival: true });
                             setDeleteId(row?.id);
                         }}
                     >
@@ -152,18 +112,18 @@ const Media = () => {
                     </button>
                 </div>
             ),
-            width: '130px'
+            width: '120px'
         },
     ];
 
-    const fetchMedia = async () => {
+    const fetchFestival = async () => {
         setLoader(true);
 
         try {
-            const res = await Axios.get(`${apiendpoints.media}`, authorizationHeaders());
+            const res = await Axios.get(`${apiendpoints.festival}`, authorizationHeaders());
 
             if (res.data?.status) {
-                setMedia(res.data?.data || []);
+                setFestival(res.data?.data || []);
             }
             else {
                 toast.error(res.data?.message);
@@ -185,35 +145,33 @@ const Media = () => {
     }
 
     useEffect(() => {
-        fetchMedia();
+        fetchFestival();
     }, [])
 
     const handleDelete = async () => {
         setIsDeleteLoading(true);
 
         try {
-            const res = await Axios.delete(apiendpoints.deleteMedia.replace(":id", deleteId), authorizationHeaders());
+            const res = await Axios.delete(apiendpoints.deleteFestival.replace(":id", deleteId), authorizationHeaders());
 
             if (res.data?.status) {
                 toast.success(res.data?.message);
 
                 handleClose();
-                fetchMedia();
+                fetchFestival();
 
-                setMedia((prev) => prev.filter((i) => i.id !== deleteId));
+                setFestival((prev) => prev.filter((i) => i.id !== deleteId));
             }
             else {
                 toast.error(res.data?.message);
             }
 
         } catch (err) {
-            console.error("Delete-Blog-Error++", err);
+            console.error("Delete-Festival-Error++", err);
         } finally {
             setIsDeleteLoading(false);
         }
     }
-
-
     return (
         <>
             <section className="categorylist-section mt-4 mt-lg-4 mt-xl-5">
@@ -223,11 +181,11 @@ const Media = () => {
                             <div className="card-header">
                                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
                                     <h3 className="mb-0 page-title">
-                                        Media
+                                        Festival Offer
                                     </h3>
                                     <button className="add-btn boreder-0" type="button"
-                                        onClick={() => navigate("/admin/addmedia")}>
-                                        + Add Media
+                                        onClick={() => navigate("/admin/addfestival")}>
+                                        + Add Festival Offer
                                     </button>
                                 </div>
                             </div>
@@ -235,19 +193,19 @@ const Media = () => {
                             <div className="card-body table-responsive">
                                 <div className="row mt-2 mb-2 justify-content-between">
                                     <div className="col-md-auto search ms-auto">
-                                        <div className="dt-search d-flex align-items-center gap-1">
-                                            <label htmlFor="dt-search-0" className='search-label'>
-                                                Search:
-                                            </label>
-                                            <input
-                                                type="search"
-                                                className="form-control form-control-sm search"
-                                                id="dt-search-0"
-                                                name='search'
-                                                value={search}
-                                                onChange={(e) => setSearch(e.target.value)}
-                                            />
-                                        </div>
+                                        {/* <div className="dt-search d-flex align-items-center gap-1">
+                      <label htmlFor="dt-search-0" className='search-label'>
+                        Search:
+                      </label>
+                      <input
+                        type="search"
+                        className="form-control form-control-sm search"
+                        id="dt-search-0"
+                        name='search'
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div> */}
                                     </div>
 
                                 </div>
@@ -262,7 +220,7 @@ const Media = () => {
                                             columns={columns}
                                             currentPageData={currentPageData}
                                             loader={loader}
-                                            filterDataLength={filtermedia.length || 0}
+                                            filterDataLength={filterslider.length || 0}
 
 
                                             // ✅ real total from API
@@ -280,9 +238,9 @@ const Media = () => {
             </section>
 
             {/* Delete-Company Modal */}
-            <Delete show={modalShow.deletemedia} handleClose={handleClose} isDeleteLoading={isDeleteLoading} handleDelete={handleDelete} role={"media"} />
+            <Delete show={modalShow.deletefestival} handleClose={handleClose} isDeleteLoading={isDeleteLoading} handleDelete={handleDelete} role={"festival offer"} />
         </>
     )
 }
 
-export default Media
+export default Festival

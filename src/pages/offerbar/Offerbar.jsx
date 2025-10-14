@@ -110,7 +110,6 @@ const Offerbar = () => {
             onClick={() => {
               setModalShow({ ...modalShow, deleteofferbar: true });
               setDeleteId(row?.id);
-              console.log(deleteId)
             }}
           >
             <FaTrash />

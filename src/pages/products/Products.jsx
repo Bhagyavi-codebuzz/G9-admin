@@ -44,7 +44,7 @@ const Products = () => {
     const startIndex = (currentPage - 1) * perPage;
     const currentPageData = filterproducts.slice(startIndex, startIndex + perPage);
     // const data = currentPageData.map((itm) => itm?.productMaterials.map((itm) => itm))
-    // console.log('currentPageData', data);
+    
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -123,7 +123,7 @@ const Products = () => {
                 <div className="d-flex align-items-center">
                     <button type="button" className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
                         onClick={() => {
-                            navigate(`/admin/products-details/${row?.id}`);
+                            navigate(`/admin/products-details/${row?.id}`, { state: { products: row } });
                         }}
                     >
                         <FaEye />
@@ -290,7 +290,6 @@ const Products = () => {
 
             toast.success("Products exported successfully!");
         } catch (err) {
-            console.error("Export-Products-CSV-Error++", err);
             toast.error("Failed to export products");
         }
     };

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import left from "../../assets/Images/lefticon.png";
@@ -6,7 +6,6 @@ import { Editor } from 'primereact/editor';
 import { loaders } from '../../componet/loader/Loader';
 import { authorizationHeaders, authorizationHeadersImage, Axios } from '../../componet/helper/Axios';
 import { apiendpoints } from '../../componet/constants/apiroutes';
-import { da } from 'date-fns/locale';
 
 const initialState = {
     title: "",
@@ -17,10 +16,10 @@ const initialState = {
     shortDescription: "",
     estimatedTime: "",
     price: [],
-    original_price: "",
-    selling_price: "",
-    profit: "",
-    gst: "",
+    original_price: {},
+    selling_price: {},
+    profit: {},
+    gst: {},
     productMaterials: [],
     categoryId: '',
     subCategoryId: '',
@@ -41,38 +40,54 @@ const AddProducts = () => {
     const [previews, setPreviews] = useState([]);
     const [category, setCategory] = useState([]);
     const [subcategory, setSubcategory] = useState([]);
-    const [metals, setmetals] = useState([]);
+    const [metals, setMetals] = useState([]);
     const [stoneShape, setStoneShape] = useState([]);
     const [goldPurity, setGoldPurity] = useState([]);
     const [videoFile, setVideoFile] = useState(null);
     const [previewsByMetal, setPreviewsByMetal] = useState({});
     const [videoPreview, setVideoPreview] = useState("");
     const [activeGoldPurityId, setActiveGoldPurityId] = useState(null);
-    const [activemetalId, setActivemetalId] = useState(null);
+    const [activeMetalId, setActiveMetalId] = useState(null);
 
     const fileInputRef = useRef(null);
+    const previewsRef = useRef({});
+
+    useEffect(() => {
+        previewsRef.current = previewsByMetal;
+    }, [previewsByMetal]);
+
+    useEffect(() => {
+        return () => {
+            Object.values(previewsRef.current).forEach(metal => {
+                if (metal?.images) {
+                    metal.images.forEach(url => URL.revokeObjectURL(url));
+                }
+                if (metal?.videoPreview) {
+                    URL.revokeObjectURL(metal.videoPreview);
+                }
+            });
+        };
+    }, []);
 
     const handleVideoChange = (e) => {
         const file = e.target.files[0];
-        if (!file || !activemetalId) return;
+        if (!file || !activeMetalId) return;
 
-        // ✅ Store file
         setFormData(prev => ({
             ...prev,
             metalsData: {
                 ...prev.metalsData,
-                [activemetalId]: {
-                    ...(prev.metalsData[activemetalId] || {}),
+                [activeMetalId]: {
+                    ...(prev.metalsData[activeMetalId] || {}),
                     video: file
                 }
             }
         }));
 
-        // ✅ Store preview
         setPreviewsByMetal(prev => ({
             ...prev,
-            [activemetalId]: {
-                ...(prev[activemetalId] || {}),
+            [activeMetalId]: {
+                ...(prev[activeMetalId] || {}),
                 videoPreview: URL.createObjectURL(file)
             }
         }));
@@ -82,88 +97,104 @@ const AddProducts = () => {
         e.preventDefault();
 
         const requiredFields = [
-            "stockNumber", "estimatedTime",
-            "categoryId", "subCategoryId", "metalId", "stoneShapeId", "goldPurityId",
-            "selling_price", "profit", "gst", "diamondCut"
+            "stockNumber", 
+            "estimatedTime",
+            "categoryId", 
+            "subCategoryId", 
+            "metalId", 
+            "stoneShapeId", 
+            "goldPurityId",
+            "diamondCut"
         ];
 
-        // ✅ General required fields validation
+        // General required fields validation
         for (const field of requiredFields) {
             if (
                 !formData[field] ||
                 (Array.isArray(formData[field]) && formData[field].length === 0) ||
                 (typeof formData[field] === "string" && formData[field].trim() === "")
             ) {
-                toast.error(`${field.replace(/([A-Z])/g, " $1")} is required!`);
+                toast.error(`${field.replace(/([A-Z])/g, " $1").trim()} is required!`);
                 return;
             }
         }
 
-        // ✅ Gold Purity validation (at least one selected)
-        if (!formData.goldPurityId || formData.goldPurityId.length === 0) {
-            toast.error("At least one gold purity must be selected!");
-            return;
-        }
-
-        if (formData.title) {
+        // Title validation
+        if (formData.title && formData.title.trim()) {
             const firstChar = formData.title.charAt(0);
             if (firstChar !== firstChar.toUpperCase()) {
                 toast.error("Title must start with a capital letter!");
-            }
-        }
-
-
-        // ✅ Gold Purity ID-wise field validation
-        for (const id of formData.goldPurityId) {
-            const sellingPrice = formData.selling_price?.[id];
-            const profitValue = formData.profit?.[id];
-            const gstValue = formData.gst?.[id];
-
-            if (
-                sellingPrice === "" || sellingPrice == null ||
-                profitValue === "" || profitValue == null ||
-                gstValue === "" || gstValue == null
-            ) {
-                toast.error(`Please fill all price, profit, and GST fields for gold purity ID: ${id}`);
                 return;
             }
         }
 
-        // ✅ Metal-wise image & video validation
-        for (const metalId of formData.metalId) {
-            const metalData = formData.metalsData?.[metalId];
-            const metalName =
-                metals.find(m => m.id.toString() === metalId.toString())?.name ||
-                `Metal ID ${metalId}`;
+        // Gold Purity ID-wise price validation
+        for (const id of formData.goldPurityId) {
+            const sellingPrice = formData.selling_price[id];
+            const profitValue = formData.profit[id];
+            const gstValue = formData.gst[id];
 
-            // ❌ No entry in metalsData
+            if (
+                sellingPrice === undefined || 
+                sellingPrice === null || 
+                sellingPrice === "" ||
+                isNaN(parseFloat(sellingPrice)) ||
+                parseFloat(sellingPrice) <= 0
+            ) {
+                toast.error(`Selling price is required and must be a valid number for gold purity ID: ${id}`);
+                return;
+            }
+
+            if (
+                profitValue === undefined || 
+                profitValue === null || 
+                profitValue === "" ||
+                isNaN(parseFloat(profitValue)) ||
+                parseFloat(profitValue) < 0
+            ) {
+                toast.error(`Profit percentage is required and must be a valid number for gold purity ID: ${id}`);
+                return;
+            }
+
+            if (
+                gstValue === undefined || 
+                gstValue === null || 
+                gstValue === "" ||
+                isNaN(parseFloat(gstValue)) ||
+                parseFloat(gstValue) < 0
+            ) {
+                toast.error(`GST percentage is required and must be a valid number for gold purity ID: ${id}`);
+                return;
+            }
+        }
+
+        // Metal-wise image validation
+        for (const metalId of formData.metalId) {
+            const metalData = formData.metalsData[metalId];
+            const metalName = metals.find(m => m.id.toString() === metalId.toString())?.name || `Metal ID ${metalId}`;
+
             if (!metalData) {
                 toast.error(`Please upload images for ${metalName}`);
                 return;
             }
 
-            // ❌ No images
             if (!metalData.images || metalData.images.length === 0) {
                 toast.error(`At least one image is required for ${metalName}`);
                 return;
             }
+
             if (metalData.images.length > 5) {
-                toast.error(`You can max 5 images add for ${metalName}`)
-                return
+                toast.error(`Maximum 5 images allowed for ${metalName}`);
+                return;
             }
 
-            console.log(metalData, "==-=-=- metalData ==-=")
-
-            // ✅ Optional: If you want to enforce video per metal
-            // if (metalData.video.length >1) {
-            //     toast.error(`You can max one video add for ${metalName}`);
-            //     return;
-            // }
+            if (metalData.video && Array.isArray(metalData.video)) {
+                toast.error(`Only one video is allowed for ${metalName}`);
+                return;
+            }
         }
 
-
-
-        // ✅ Prepare FormData
+        // Prepare FormData
         const form = new FormData();
         form.append("title", formData.title);
         form.append("estimatedTime", formData.estimatedTime);
@@ -188,8 +219,16 @@ const AddProducts = () => {
             }, {});
         form.append("productMaterials", JSON.stringify(materialsObj));
 
-        if (formData.purity?.length > 0) {
-            form.append("purity", JSON.stringify(formData.purity));
+        if (formData.goldPurityId?.length > 0) {
+            const purityArray = formData.goldPurityId.map(id => ({
+                value: Number(id),
+                name: goldPurity.find(m => m.id.toString() === id.toString())?.name || "",
+                original_price: parseFloat(formData.original_price[id] || 0).toFixed(2),
+                selling_price: parseFloat(formData.selling_price[id]).toFixed(2),
+                profit: parseFloat(formData.profit[id]).toFixed(2),
+                gst: parseFloat(formData.gst[id]).toFixed(2)
+            }));
+            form.append("purity", JSON.stringify(purityArray));
         }
 
         setLoading(true);
@@ -197,7 +236,7 @@ const AddProducts = () => {
             const res = await Axios.post(apiendpoints.addProducts, form, authorizationHeaders());
 
             if (res.data?.status) {
-                // ✅ Upload metal media
+                // Upload metal media
                 for (const metalId of Object.keys(formData.metalsData)) {
                     const metalData = formData.metalsData[metalId];
                     if (metalData?.images?.length > 0 || metalData?.video) {
@@ -223,126 +262,121 @@ const AddProducts = () => {
                             );
 
                             if (mediaRes.data?.status) {
-                                navigate("/admin/products");
                                 toast.success(mediaRes.data?.message);
                             } else {
                                 toast.error(`Failed to upload media for metal ID ${metalId}: ${mediaRes.data?.message || 'Unknown error'}`);
                             }
                         } catch (mediaErr) {
-                            console.error(`Error uploading media for metal ID ${metalId}:`, mediaErr.response?.data || mediaErr.message);
                             toast.error(`Failed to upload media for metal ID ${metalId}: ${mediaErr.response?.data?.message || 'Server error'}`);
                         }
                     }
                 }
 
+                navigate("/admin/products");
                 setFormData(initialState);
                 setPreviews([]);
                 setVideoFile(null);
                 setVideoPreview("");
-
+                toast.success("Product added successfully!");
             } else {
                 toast.error(res.data?.message || "Failed to add product");
             }
         } catch (err) {
-            console.error("Add product error:", err.response?.data || err.message);
             toast.error("Something went wrong while adding the product!");
         } finally {
             setLoading(false);
         }
     };
 
-
     const handleChange = (e) => {
         const { name, files } = e.target;
-        if (!activemetalId) return;
+        if (!activeMetalId) {
+            toast.error("Please select a metal first!");
+            return;
+        }
 
         if (files && name === "images") {
             const list = Array.from(files);
+            const currentImages = formData.metalsData[activeMetalId]?.images || [];
+            
+            if (currentImages.length + list.length > 5) {
+                toast.error("Maximum 5 images allowed per metal!");
+                return;
+            }
 
             setFormData(prev => ({
                 ...prev,
                 metalsData: {
                     ...prev.metalsData,
-                    [activemetalId]: {
-                        ...(prev.metalsData[activemetalId] || {}),
-                        images: [
-                            ...(prev.metalsData[activemetalId]?.images || []),
-                            ...list
-                        ]
+                    [activeMetalId]: {
+                        ...(prev.metalsData[activeMetalId] || {}),
+                        images: [...currentImages, ...list]
                     }
                 }
             }));
 
-            // ✅ Store previews
             const urls = list.map(f => URL.createObjectURL(f));
             setPreviewsByMetal(prev => ({
                 ...prev,
-                [activemetalId]: {
-                    ...(prev[activemetalId] || {}),
-                    images: [
-                        ...(prev[activemetalId]?.images || []),
-                        ...urls
-                    ]
+                [activeMetalId]: {
+                    ...(prev[activeMetalId] || {}),
+                    images: [...(prev[activeMetalId]?.images || []), ...urls]
                 }
             }));
 
-            e.target.value = ""; // reset file input
+            e.target.value = "";
         }
     };
 
-    useEffect(() => {
-        return () => {
-            previews.forEach((u) => URL.revokeObjectURL(u));
-        };
-    }, [previews]);
-
-    // Update a specific name or value
     const handleMaterialChange = (index, field, value) => {
         setFormData(prev => {
             const materials = [...prev.productMaterials];
-            materials[index][field] = value; // field is "name" or "value"
+            materials[index][field] = value;
             return { ...prev, productMaterials: materials };
         });
     };
 
-    // ✅ Remove image at index
-    const handleRemoveImage = (idx) => {
-        if (!activemetalId) return;
+    const removeMaterial = (index) => {
+        setFormData((prev) => ({
+            ...prev,
+            productMaterials: prev.productMaterials.filter((_, i) => i !== index)
+        }));
+    };
 
+    const addMaterial = () => {
+        setFormData((prev) => ({
+            ...prev,
+            productMaterials: [...prev.productMaterials, { name: "", value: "" }]
+        }));
+    };
+
+    const handleRemoveImage = (idx) => {
+        if (!activeMetalId) return;
+
+        // Revoke the specific image URL
+        const urlToRevoke = previewsByMetal[activeMetalId]?.images?.[idx];
+        if (urlToRevoke) {
+            URL.revokeObjectURL(urlToRevoke);
+        }
+
+        // Remove only the specific image at index
         setFormData(prev => ({
             ...prev,
             metalsData: {
                 ...prev.metalsData,
-                [activemetalId]: {
-                    ...prev.metalsData[activemetalId],
-                    images: prev.metalsData[activemetalId].images.filter((_, i) => i !== idx)
+                [activeMetalId]: {
+                    ...prev.metalsData[activeMetalId],
+                    images: prev.metalsData[activeMetalId].images.filter((_, i) => i !== idx)
                 }
             }
         }));
 
         setPreviewsByMetal(prev => ({
             ...prev,
-            [activemetalId]: {
-                ...prev[activemetalId],
-                images: prev[activemetalId].images.filter((_, i) => i !== idx)
+            [activeMetalId]: {
+                ...prev[activeMetalId],
+                images: prev[activeMetalId].images.filter((_, i) => i !== idx)
             }
-        }));
-    };
-
-    // Remove a material
-    const removeMaterial = (index) => {
-        setFormData((prev) => {
-            const materials = [...prev.productMaterials];
-            materials.splice(index, 1);
-            return { ...prev, productMaterials: materials };
-        });
-    };
-
-    // Add a new empty key-value pair
-    const addMaterial = () => {
-        setFormData((prev) => ({
-            ...prev,
-            productMaterials: [...prev.productMaterials, { name: "", value: "" }]
         }));
     };
 
@@ -351,23 +385,19 @@ const AddProducts = () => {
 
         if (name === "metalId" || name === "goldPurityId") {
             setFormData((prev) => {
-                // use the correct array dynamically
                 const currentValues = prev[name] || [];
-
-                // avoid duplicates
                 if (currentValues.includes(value)) {
                     return prev;
                 }
-
                 return {
                     ...prev,
-                    [name]: [...currentValues, value],
+                    [name]: [...currentValues, value]
                 };
             });
         } else {
             setFormData((prev) => ({
                 ...prev,
-                [name]: value,
+                [name]: value
             }));
         }
     };
@@ -381,97 +411,61 @@ const AddProducts = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            } else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
+            toast.error(err.response?.data?.message || "Failed to fetch categories");
         }
-    }
+    };
 
     const fetchSubCategory = async () => {
         try {
-            const res = await Axios.get(`${apiendpoints.subCategory}`, authorizationHeaders());
+            const res = await Axios.get(apiendpoints.subCategory, authorizationHeaders());
             if (res.data?.status) {
                 setSubcategory(res.data?.data || []);
             } else {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            } else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
+            toast.error(err.response?.data?.message || "Failed to fetch subcategories");
         }
-    }
+    };
 
     const fetchMetals = async () => {
         try {
-            const res = await Axios.get(`${apiendpoints.metal}`, authorizationHeaders());
+            const res = await Axios.get(apiendpoints.metal, authorizationHeaders());
             if (res.data?.status) {
-                setmetals(res.data?.data || []);
-                console.log("metals", metals)
+                setMetals(res.data?.data || []);
             } else {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            } else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
+            toast.error(err.response?.data?.message || "Failed to fetch metals");
         }
-    }
+    };
 
     const fetchStoneShape = async () => {
         try {
-            const res = await Axios.get(`${apiendpoints.StoneShape}`, authorizationHeaders());
+            const res = await Axios.get(apiendpoints.StoneShape, authorizationHeaders());
             if (res.data?.status) {
                 setStoneShape(res.data?.data || []);
             } else {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            } else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
+            toast.error(err.response?.data?.message || "Failed to fetch stone shapes");
         }
-    }
+    };
 
-    const fetchgoldPurity = async () => {
+    const fetchGoldPurity = async () => {
         try {
-            const res = await Axios.get(`${apiendpoints.goldPurity}`, authorizationHeaders());
+            const res = await Axios.get(apiendpoints.goldPurity, authorizationHeaders());
             if (res.data?.status) {
                 setGoldPurity(res.data?.data || []);
             } else {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            if (err?.message === "Network Error") {
-                setError(err.message);
-            }
-            if (err.response?.status === 404) {
-                setError(err.response.data.message);
-            } else if (err.response?.status === 500) {
-                setError(err.response.data.message);
-            }
+            toast.error(err.response?.data?.message || "Failed to fetch gold purity");
         }
-    }
+    };
 
     const filteredSubcategories = subcategory.filter(
         itm => itm.categoryId === Number(formData?.categoryId)
@@ -490,21 +484,19 @@ const AddProducts = () => {
         fetchSubCategory();
         fetchMetals();
         fetchStoneShape();
-        fetchgoldPurity();
-    }, [])
+        fetchGoldPurity();
+    }, []);
 
     useEffect(() => {
         if (!formData.goldPurityId?.length) return;
 
         const purityArray = formData.goldPurityId.map((id) => {
             const name = goldPurity.find((m) => m.id.toString() === id.toString())?.name || "";
-
             const originalPrice = parseFloat(formData.original_price?.[id] || 0);
             const selling = parseFloat(formData.selling_price?.[id] || 0);
             const profitValue = parseFloat(formData.profit?.[id] || 0);
             const gstValue = parseFloat(formData.gst?.[id] || 0);
 
-            // Calculations
             const profitsellingAmount = (selling * profitValue) / 100;
             const profitoriginalAmount = (originalPrice * profitValue) / 100;
             const profitsellingprice = selling + profitsellingAmount;
@@ -525,7 +517,7 @@ const AddProducts = () => {
                 profitsellingprice: profitsellingprice.toFixed(2),
                 gst: gstValue + "%",
                 gstAmount: gstAmount.toFixed(2),
-                gstPrice: finalTotal.toFixed(2),
+                gstPrice: finalTotal.toFixed(2)
             };
         });
 
@@ -533,7 +525,6 @@ const AddProducts = () => {
             ...prev,
             purity: purityArray
         }));
-
     }, [formData.goldPurityId, formData.original_price, formData.selling_price, formData.profit, formData.gst]);
 
     return (
@@ -558,7 +549,7 @@ const AddProducts = () => {
 
                         {/* Stock Number */}
                         <div className="col-lg-6 col-md-6 col-12 mb-2">
-                            <label htmlFor="stockNumber " className="form-label">
+                            <label htmlFor="stockNumber" className="form-label">
                                 Stock Number :
                             </label>
                             <input
@@ -650,7 +641,7 @@ const AddProducts = () => {
                                 onChange={handleInput}
                                 required
                             >
-                                <option >-- Select Metals --</option>
+                                <option value="">-- Select Metals --</option>
                                 {metals?.map((item) => (
                                     <option key={item.id} value={item.id}>
                                         {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
@@ -658,7 +649,6 @@ const AddProducts = () => {
                                 ))}
                             </select>
 
-                            {/* Show selected metals */}
                             {formData.metalId?.length > 0 && (
                                 <div className="mt-2">
                                     {formData.metalId.map((id) => {
@@ -674,6 +664,10 @@ const AddProducts = () => {
                                                         setFormData((prev) => ({
                                                             ...prev,
                                                             metalId: prev.metalId.filter((mid) => mid !== id),
+                                                            metalsData: {
+                                                                ...prev.metalsData,
+                                                                [id]: undefined
+                                                            }
                                                         }))
                                                     }
                                                 ></button>
@@ -704,7 +698,6 @@ const AddProducts = () => {
                                 ))}
                             </select>
 
-                            {/* Show selected goldPurity */}
                             {formData.goldPurityId?.length > 0 && (
                                 <div className="mt-2">
                                     {formData.goldPurityId.map((id) => {
@@ -727,6 +720,10 @@ const AddProducts = () => {
                                                             goldPurityId: prev.goldPurityId.filter(
                                                                 (mid) => mid !== id
                                                             ),
+                                                            original_price: { ...prev.original_price, [id]: undefined },
+                                                            selling_price: { ...prev.selling_price, [id]: undefined },
+                                                            profit: { ...prev.profit, [id]: undefined },
+                                                            gst: { ...prev.gst, [id]: undefined }
                                                         }))
                                                     }
                                                 ></button>
@@ -773,15 +770,9 @@ const AddProducts = () => {
                                 required
                             >
                                 <option value="">-- Select Diamond Cut --</option>
-                                <option value="excellent">
-                                    Excellent
-                                </option>
-                                <option value="verygood">
-                                    Very Good
-                                </option>
-                                <option value="good">
-                                    Good
-                                </option>
+                                <option value="excellent">Excellent</option>
+                                <option value="verygood">Very Good</option>
+                                <option value="good">Good</option>
                             </select>
                         </div>
 
@@ -791,14 +782,12 @@ const AddProducts = () => {
                                 Enter Price According to Purity :
                             </label>
 
-                            {/* Show selected goldPurity with price input */}
                             {formData.goldPurityId?.length > 0 && (
                                 <div className="mt-2">
                                     <div className="d-flex flex-wrap gap-2 mb-2">
                                         {formData.goldPurityId.map((id) => {
                                             const goldPurityName =
                                                 goldPurity.find((m) => m.id.toString() === id.toString())?.name || id;
-
                                             const isActive = activeGoldPurityId === id;
 
                                             return (
@@ -814,7 +803,6 @@ const AddProducts = () => {
                                         })}
                                     </div>
 
-                                    {/* Inputs for active tab, full screen width */}
                                     {activeGoldPurityId && (
                                         <div className="row">
                                             <div className="col-lg-3 col-md-6 col-12">
@@ -822,99 +810,86 @@ const AddProducts = () => {
                                                 <input
                                                     type="text"
                                                     className="form-control mb-2"
-                                                    placeholder={`Enter original price`}
+                                                    placeholder="Enter original price"
                                                     value={formData.original_price?.[activeGoldPurityId] || ""}
                                                     onChange={(e) => {
                                                         const value = e.target.value;
                                                         if (/^\d*\.?\d*$/.test(value)) {
                                                             setFormData((prev) => ({
                                                                 ...prev,
-                                                                original_price: { ...prev.original_price, [activeGoldPurityId]: value },
-                                                            }))
+                                                                original_price: { ...prev.original_price, [activeGoldPurityId]: value }
+                                                            }));
                                                         }
-                                                    }
-                                                    }
+                                                    }}
                                                 />
                                             </div>
                                             <div className="col-lg-3 col-md-6 col-12">
                                                 <label className="form-label">Selling Price :</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     className="form-control mb-2"
-                                                    placeholder={`Enter selling price`}
+                                                    placeholder="Enter selling price"
                                                     value={formData.selling_price?.[activeGoldPurityId] || ""}
                                                     onChange={(e) => {
                                                         const value = e.target.value;
                                                         if (/^\d*\.?\d*$/.test(value)) {
                                                             setFormData((prev) => ({
                                                                 ...prev,
-                                                                selling_price: { ...prev.selling_price, [activeGoldPurityId]: value },
-                                                            }))
+                                                                selling_price: { ...prev.selling_price, [activeGoldPurityId]: value }
+                                                            }));
                                                         }
-                                                    }
-                                                    }
+                                                    }}
+                                                    // required
                                                 />
                                             </div>
                                             <div className="col-lg-3 col-md-6 col-12">
                                                 <label className="form-label">Profit Percentage :</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     className="form-control mb-2"
-                                                    placeholder={`Enter profit percentage`}
+                                                    placeholder="Enter profit percentage"
                                                     value={formData.profit?.[activeGoldPurityId] || ""}
                                                     onChange={(e) => {
                                                         const value = e.target.value;
-
                                                         if (/^\d*\.?\d*$/.test(value)) {
                                                             setFormData((prev) => ({
                                                                 ...prev,
-                                                                profit: { ...prev.profit, [activeGoldPurityId]: value },
-                                                            }))
+                                                                profit: { ...prev.profit, [activeGoldPurityId]: value }
+                                                            }));
                                                         }
-                                                    }
-                                                    }
+                                                    }}
+                                                    // required
                                                 />
                                             </div>
                                             <div className="col-lg-3">
                                                 <label className="form-label">GST :</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     className="form-control mb-2"
                                                     placeholder="Enter GST"
                                                     value={formData.gst?.[activeGoldPurityId] || ""}
                                                     onChange={(e) => {
                                                         const value = e.target.value;
-                                                        // Allow only digits (0–9)
                                                         if (/^\d*\.?\d*$/.test(value)) {
                                                             setFormData((prev) => ({
                                                                 ...prev,
-                                                                gst: { ...prev.gst, [activeGoldPurityId]: value },
+                                                                gst: { ...prev.gst, [activeGoldPurityId]: value }
                                                             }));
                                                         }
                                                     }}
+                                                    // required
                                                 />
                                             </div>
 
-                                            {/* Totals for this active purity */}
                                             <div className="col-12 mt-3">
                                                 {(() => {
                                                     const selling = parseFloat(formData.selling_price?.[activeGoldPurityId] || 0);
                                                     const profitPercent = parseFloat(formData.profit?.[activeGoldPurityId] || 0);
                                                     const gstPercent = parseFloat(formData.gst?.[activeGoldPurityId] || 0);
 
-                                                    // Profit Amount = Selling * Profit %
                                                     const profitAmount = (selling * profitPercent) / 100;
-
-                                                    // Total including profit
                                                     const totalProfitAmount = selling + profitAmount;
-
-                                                    // GST Amount = Profit * GST %
-                                                    const gstAmount = totalProfitAmount * (gstPercent / 100);
-
-                                                    // Total Amount = Selling + Profit + GST
+                                                    const gstAmount = (totalProfitAmount * gstPercent) / 100;
                                                     const finalTotal = totalProfitAmount + gstAmount;
 
                                                     return (
@@ -923,12 +898,10 @@ const AddProducts = () => {
                                                                 <strong>Profit Amount (Selling Price + Profit Margin) : </strong>
                                                                 {totalProfitAmount.toFixed(2)}
                                                             </h5>
-
                                                             <h5 className='d-flex justify-content-between mb-4'>
                                                                 <strong>Gst Amount (Profit Amount * GST) : </strong>
                                                                 {gstAmount.toFixed(2)}
                                                             </h5>
-
                                                             <h5 className='d-flex justify-content-between mb-2'>
                                                                 <strong>Total Amount (Profit Amount + GST) : </strong>
                                                                 {finalTotal.toFixed(2)}
@@ -944,28 +917,25 @@ const AddProducts = () => {
                         </div>
 
                         <p className='mt-5'>4. Product Images & Media</p>
-
                         <div className="col-12 mb-2">
                             <label htmlFor="images" className="form-label">
-                                Enter Image and Video According to Purity :
+                                Enter Image and Video According to Metal :
                             </label>
 
-                            {/* Show selected goldPurity with price input */}
                             {formData.metalId?.length > 0 && (
                                 <div className="mt-2">
                                     <div className="d-flex flex-wrap gap-2 mb-2">
                                         {formData.metalId.map((id) => {
                                             const metalName =
                                                 metals.find((m) => m.id.toString() === id.toString())?.name || id;
-
-                                            const isActive = activemetalId === id;
+                                            const isActive = activeMetalId === id;
 
                                             return (
                                                 <span
                                                     key={id}
                                                     className={`badge p-2 fs-6 ${isActive ? "bg-success" : "bg-primary"}`}
                                                     style={{ cursor: "pointer", minWidth: "60px", textAlign: "center" }}
-                                                    onClick={() => setActivemetalId(isActive ? null : id)}
+                                                    onClick={() => setActiveMetalId(isActive ? null : id)}
                                                 >
                                                     {metalName}
                                                 </span>
@@ -973,12 +943,10 @@ const AddProducts = () => {
                                         })}
                                     </div>
 
-                                    {/* Inputs for active tab, full screen width */}
-                                    {activemetalId && (
+                                    {activeMetalId && (
                                         <div className="row">
-                                            {/* Image Upload */}
                                             <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                                <label htmlFor="image" className="form-label">Images :</label>
+                                                <label htmlFor="images" className="form-label">Images :</label>
                                                 <input
                                                     type="file"
                                                     name="images"
@@ -987,12 +955,11 @@ const AddProducts = () => {
                                                     onChange={handleChange}
                                                     accept="image/jpeg,image/jpg,image/png,image/gif"
                                                     multiple
-                                                // required
+                                                    // required={formData.metalsData[activeMetalId]?.images?.length === 0}
                                                 />
-
-                                                {previewsByMetal[activemetalId]?.images?.length > 0 && (
+                                                {previewsByMetal[activeMetalId]?.images?.length > 0 && (
                                                     <div className="d-flex flex-wrap gap-2 mt-2">
-                                                        {previewsByMetal[activemetalId].images.map((src, idx) => (
+                                                        {previewsByMetal[activeMetalId].images.map((src, idx) => (
                                                             <div key={idx} className="position-relative">
                                                                 <img
                                                                     src={src}
@@ -1021,7 +988,6 @@ const AddProducts = () => {
                                                 )}
                                             </div>
 
-                                            {/* Video Upload */}
                                             <div className="col-lg-6 col-md-6 col-12 mb-2">
                                                 <label htmlFor="video" className="form-label">Upload Video (Optional) :</label>
                                                 <input
@@ -1031,14 +997,13 @@ const AddProducts = () => {
                                                     className="form-control"
                                                     onChange={handleVideoChange}
                                                 />
-
-                                                {previewsByMetal[activemetalId]?.videoPreview && (
+                                                {previewsByMetal[activeMetalId]?.videoPreview && (
                                                     <div className="mt-3">
                                                         <video
                                                             width="320"
                                                             height="180"
                                                             controls
-                                                            src={previewsByMetal[activemetalId].videoPreview}
+                                                            src={previewsByMetal[activeMetalId].videoPreview}
                                                             className="rounded border"
                                                         />
                                                     </div>
@@ -1051,7 +1016,6 @@ const AddProducts = () => {
                         </div>
 
                         <p className='mt-5'>5. Product Description & Details</p>
-                        {/* Short Description */}
                         <div className="col-12 mb-2">
                             <label htmlFor="shortDescription" className="form-label">
                                 Short Description (Optional) :
@@ -1061,14 +1025,13 @@ const AddProducts = () => {
                                 name="shortDescription"
                                 id="shortDescription"
                                 className="form-control"
-                                placeholder="Enter Short Description "
+                                placeholder="Enter Short Description"
                                 autoComplete="off"
                                 value={formData.shortDescription}
                                 onChange={handleInput}
                             />
                         </div>
 
-                        {/* Description */}
                         <div className="col-12 mb-2">
                             <label htmlFor="description" className="form-label">
                                 Description (Optional) :
@@ -1082,7 +1045,6 @@ const AddProducts = () => {
                             />
                         </div>
 
-                        {/* Product Materials */}
                         <div className="col-12 mb-2 d-flex flex-column">
                             <label className="form-label">Product Materials (Optional) :</label>
                             {formData.productMaterials.map((item, index) => (
@@ -1104,7 +1066,6 @@ const AddProducts = () => {
                                     <button type="button" className="btn btn-danger" onClick={() => removeMaterial(index)}>Clear</button>
                                 </div>
                             ))}
-
                             <div>
                                 <button
                                     type="button"
@@ -1116,9 +1077,7 @@ const AddProducts = () => {
                             </div>
                         </div>
 
-                        <p className='mt-5'>6. Product Description & Details</p>
-
-                        {/* Estimated Time */}
+                        <p className='mt-5'>6. Product Status</p>
                         <div className="col-12 mb-2">
                             <label htmlFor="estimatedTime" className="form-label">
                                 Estimated Time :
@@ -1128,7 +1087,7 @@ const AddProducts = () => {
                                 name="estimatedTime"
                                 id="estimatedTime"
                                 className="form-control"
-                                placeholder="Enter Estimated Time "
+                                placeholder="Enter Estimated Time"
                                 autoComplete="off"
                                 value={formData.estimatedTime}
                                 onChange={handleInput}
@@ -1136,7 +1095,6 @@ const AddProducts = () => {
                             />
                         </div>
 
-                        {/* Top Seller Boolean */}
                         <div className="col-lg-6 col-md-6 col-12 mb-2 radio d-flex justify-content-between align-items-center">
                             <label className="form-label">Is this product a top seller?</label>
                             <div className="d-flex gap-5">
@@ -1175,7 +1133,6 @@ const AddProducts = () => {
                             </div>
                         </div>
 
-                        {/* discounted Boolean */}
                         <div className="col-lg-6 col-md-6 col-12 mb-2 radio d-flex justify-content-between align-items-center">
                             <label className="form-label ms-3">Is this product currently discounted?</label>
                             <div className="d-flex gap-5">
@@ -1214,7 +1171,6 @@ const AddProducts = () => {
                             </div>
                         </div>
 
-                        {/* readyToShip Boolean */}
                         <div className="col-lg-6 col-md-6 col-12 mb-2 radio d-flex justify-content-between align-items-center">
                             <label className="form-label">Is this product ready to ship immediately?</label>
                             <div className="d-flex gap-5">
@@ -1253,9 +1209,8 @@ const AddProducts = () => {
                             </div>
                         </div>
 
-                        {/* newArrival Boolean */}
                         <div className="col-lg-6 col-md-6 col-12 mb-2 radio d-flex justify-content-between align-items-center">
-                            <label className="form-label ms-3">Is this product newArrival?</label>
+                            <label className="form-label ms-3">Is this product a new arrival?</label>
                             <div className="d-flex gap-5">
                                 <div className="form-check">
                                     <input
@@ -1292,7 +1247,6 @@ const AddProducts = () => {
                             </div>
                         </div>
 
-                        {/* Submit */}
                         <div className="text-end mt-3">
                             <button
                                 type="submit"

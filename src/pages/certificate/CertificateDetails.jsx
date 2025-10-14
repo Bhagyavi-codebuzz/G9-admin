@@ -7,9 +7,8 @@ import { Modal } from 'react-bootstrap';
 import { Editor } from 'primereact/editor';
 import { authorizationHeaders, Axios } from '../../componet/helper/Axios';
 import { apiendpoints } from '../../componet/constants/apiroutes';
-import PhoneInput from 'react-phone-input-2';
 
-const HelpDetails = () => {
+const CertificateDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -20,10 +19,10 @@ const HelpDetails = () => {
     const handleClose = () => setShow(false);
     const handleOpen = () => setShow(true);
 
-    const fetchHelpdetails = async (id) => {
+    const fetchBlogdetails = async (id) => {
         setLoader(true);
         try {
-            const res = await Axios.get(apiendpoints.detailsHelp.replace(":id", id), authorizationHeaders());
+            const res = await Axios.get(apiendpoints.viewCertificate.replace(":id", id), authorizationHeaders());
 
             if (res.data?.status) {
                 setFormData(res.data.data);
@@ -48,9 +47,8 @@ const HelpDetails = () => {
     }
 
     useEffect(() => {
-        fetchHelpdetails(id);
+        fetchBlogdetails(id);
     }, [id]);
-
     return (
         <>
             <section className="categorylist-section mt-4 mt-lg-4 mt-xl-5">
@@ -62,7 +60,7 @@ const HelpDetails = () => {
                                     <img src={left} alt="" style={{ height: '30px' }} />
                                 </div>
                                 <div>
-                                    Help & Support Detail
+                                    Certificate Detail
                                 </div>
                             </h2>
                         </div>
@@ -75,67 +73,44 @@ const HelpDetails = () => {
                                 </div>
                             </div>
                         ) : (
-                            <form className="row gx-5 gy-3">
-                                {/* <div className="col-lg-6 col-md-6 col-12 mb-2 flex-column d-flex">
+                            <form className="row g-3">
+                                <div className="col-12 mb-2 d-flex flex-column">
                                     <label htmlFor="donatorphoto" className="form-label">
                                         Photo :
                                     </label>
-                                    <button type='button' className='submit-btn' style={{ width: '100%', maxWidth: '157px' }} onClick={handleOpen}>View</button>
-                                </div> */}
+                                    <button type='button' className='submit-btn ' style={{ width: '100%', maxWidth: '157px' }} onClick={handleOpen}>View</button>
+                                </div>
 
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="name" className="form-label">
-                                        Name :
+                                    <label htmlFor="title" className="form-label">
+                                        Title :
                                     </label>
                                     <input
                                         type="text"
-                                        name="name"
-                                        id="name"
+                                        name="title"
+                                        id="title"
                                         className="form-control"
-                                        placeholder="Enter Name"
+                                        placeholder="Enter Title"
                                         autoComplete='off'
-                                        value={formData.name}
+                                        value={formData.title}
                                         readOnly
                                     />
                                 </div>
 
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label className="form-label">Email & Mobile :</label>
-                                    <input
-                                        type="text"
-                                        name="email"
-                                        id="email"
-                                        className="form-control"
-                                        autoComplete='off'
-                                        value={formData.email_mobileNo || "-"}
-                                        readOnly
-                                    />
-                                </div>
-
-                                {/* <div className="col-lg-6 col-md-6 col-12 mb-2">
-                                    <label htmlFor="email" className="form-label">
-                                        Email :
+                                    <label htmlFor="subTitle" className="form-label">
+                                        Sub Title :
                                     </label>
                                     <input
                                         type="text"
-                                        name="email"
-                                        id="email"
+                                        name="subTitle"
+                                        id="subTitle"
                                         className="form-control"
-                                        placeholder="Enter email"
+                                        placeholder="Enter Sub Title"
                                         autoComplete='off'
-                                        value={formData.email}
+                                        value={formData.subTitle}
                                         readOnly
                                     />
-                                </div> */}
-
-
-
-                                <div className="col-12 mb-2">
-                                    <label htmlFor="description" className="form-label">
-                                        Message  :
-                                    </label>
-                                    <Editor value={formData.message}
-                                        onTextChange={(e) => setFormData({ ...formData, message: e.htmlValue })} style={{ height: '220px' }} readOnly />
                                 </div>
 
                             </form>
@@ -160,4 +135,4 @@ const HelpDetails = () => {
     )
 }
 
-export default HelpDetails
+export default CertificateDetails

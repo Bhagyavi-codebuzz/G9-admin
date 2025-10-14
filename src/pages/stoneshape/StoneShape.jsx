@@ -114,7 +114,6 @@ const StoneShape = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deletestoneshape: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
                         }}
                     >
                         <FaTrash />

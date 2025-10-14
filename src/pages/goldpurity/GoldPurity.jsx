@@ -114,7 +114,6 @@ const GoldPurity = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deletegoldpurity: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
                         }}
                     >
                         <FaTrash />

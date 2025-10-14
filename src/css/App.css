@@ -852,10 +852,32 @@ input[type="time"]::-webkit-datetime-edit-ampm-field {
 
 .edit-user .form-control {
   padding: 10px;
-  border-radius: 10px;
   font-weight: 500;
   border: 1px solid black !important;
 }
+
+.mobile-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid black;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.country-code {
+  margin-right: 8px;
+  margin-left: 5px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #ccc;
+  margin-right: 8px;
+}
+
 
 .form-select {
   padding: 10px !important;
@@ -1059,9 +1081,10 @@ input[type="time"]::-webkit-datetime-edit-ampm-field {
   }
 }
 
-.form-control-sm:focus{
+.form-control-sm:focus {
   border-color: #dee2e6;
 }
+
 /* table border */
 .rdt_TableRow:last-child {
   border-bottom: 0 !important;
@@ -1077,8 +1100,8 @@ input[type="time"]::-webkit-datetime-edit-ampm-field {
 }
 
 
-.categorylist-section.product p{
-   font-size: 20px;
-   font-weight: 700;
-   color: black;
+.categorylist-section.product p {
+  font-size: 20px;
+  font-weight: 700;
+  color: black;
 }

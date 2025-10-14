@@ -16,11 +16,9 @@ const AddFAQ = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(initialState);
-console.log(formData);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(formData)
         setLoading(true);
 
         try {

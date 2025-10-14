@@ -9,10 +9,10 @@ import { apiendpoints } from '../../componet/constants/apiroutes';
 
 
 const initialState = {
-    slider: null
+    festival: null
 }
 
-const AddSlider = () => {
+const AddFestival = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(initialState);
@@ -32,18 +32,19 @@ const AddSlider = () => {
 
         try {
             const form = new FormData();
-            form.append("slider", formData.slider);
+            form.append("festival", formData.festival);
 
-            const res = await Axios.post(apiendpoints.addSlider, form, authorizationHeadersImage()); // ✅ use `form` here
+            const res = await Axios.post(apiendpoints.AddFestival, form, authorizationHeadersImage()); // ✅ use `form` here
 
             if (res.data?.status) {
                 toast.success(res.data?.message);
                 setFormData(initialState);
-                navigate("/admin/slider");
+                navigate("/admin/festival");
             } else {
                 toast.error(res.data?.message);
             }
         } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -60,7 +61,7 @@ const AddSlider = () => {
                                     <img src={left} alt="" style={{ height: '30px' }} />
                                 </div>
                                 <div>
-                                    Add Banner
+                                    Add Festival Offer
                                 </div>
                             </h2>
                         </div>
@@ -74,17 +75,17 @@ const AddSlider = () => {
                                 </label>
                                 <input
                                     type="file"
-                                    name="slider"
-                                    id="slider"
+                                    name="festival"
+                                    id="festival"
                                     className="form-control"
                                     onChange={handleChange}
                                     required
                                     accept="image/jpeg,image/jpg,image/png,image/gif"
                                 />
-                                {formData.slider && (
+                                {formData.festival && (
                                     <div className="mb-2 mt-2">
                                         <img
-                                            src={URL.createObjectURL(formData?.slider)}
+                                            src={URL.createObjectURL(formData?.festival)}
                                             alt="Image"
                                             className="img-thumbnail img-fluid"
                                             style={{
@@ -117,4 +118,4 @@ const AddSlider = () => {
     )
 }
 
-export default AddSlider
+export default AddFestival

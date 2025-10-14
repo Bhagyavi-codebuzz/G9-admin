@@ -60,6 +60,13 @@ import Media from './pages/media/Media';
 import AddMedia from './pages/media/AddMedia';
 import MediaDetails from './pages/media/MediaDetails';
 import MediaEdit from './pages/media/MediaEdit';
+import Certificate from './pages/certificate/Certificate';
+import AddCertificate from './pages/certificate/AddCertificate';
+import CertificateDetails from './pages/certificate/CertificateDetails';
+import CertificateEdit from './pages/certificate/CertificateEdit';
+import Festival from './pages/festival/Festival';
+import AddFestival from './pages/festival/AddFestival';
+import Settings from './pages/settings/Settings';
 
 function App() {
 
@@ -81,6 +88,10 @@ function App() {
           <Route path='/admin/addofferbar' element={<AddOfferbar />} />
           <Route path='/admin/offerbar-details/:id' element={<OfferbarDetails />} />
           <Route path='/admin/offerbar-edit' element={<OfferbarEdit />} />
+      
+          {/* Festival */}
+          <Route path='/admin/festival' element={<Festival />} />
+          <Route path='/admin/addfestival' element={<AddFestival />} />
 
           {/* Slider */}
           <Route path='/admin/slider' element={<Slider />} />
@@ -121,6 +132,12 @@ function App() {
           <Route path='/admin/materials/goldpurity-details/:id' element={<GoldPurityDetails />} />
           <Route path='/admin/materials/goldpurity-edit' element={<GoldPurityEdit />} />
 
+          {/* Certificate */}
+          <Route path='/admin/certificate' element={<Certificate />} />
+          <Route path='/admin/addcertificate' element={<AddCertificate />} />
+          <Route path='/admin/certificate-details/:id' element={<CertificateDetails />} />
+          <Route path='/admin/certificate-edit' element={<CertificateEdit />} />
+
           {/* blog */}
           <Route path='/admin/blog' element={<Blog />} />
           <Route path='/admin/addblog' element={<AddBlog />} />
@@ -128,10 +145,10 @@ function App() {
           <Route path='/admin/blog-edit' element={<BlogEdit />} />
 
           {/* media  */}
-          <Route path='/admin/media' element={<Media/>}/>
-          <Route path='/admin/addmedia' element={<AddMedia/>}/>
-          <Route path='/admin/media-details/:id' element={<MediaDetails/>}/>
-          <Route path='/admin/media-edit' element={<MediaEdit/>}/>
+          <Route path='/admin/media' element={<Media />} />
+          <Route path='/admin/addmedia' element={<AddMedia />} />
+          <Route path='/admin/media-details/:id' element={<MediaDetails />} />
+          <Route path='/admin/media-edit' element={<MediaEdit />} />
 
           {/* FAQ  */}
           <Route path='/admin/faq' element={<FAQ />} />
@@ -139,13 +156,16 @@ function App() {
           <Route path='/admin/faq-details/:id' element={<FAQDetails />} />
           <Route path='/admin/faq-edit' element={<FAQEdit />} />
 
+          {/* Settings */}
+          <Route path='/admin/settings' element={<Settings />} />
+
           {/* help & support  */}
           <Route path='/admin/help' element={<Help />} />
           <Route path='/admin/help-details/:id' element={<HelpDetails />} />
 
           {/* ComplaintQuery */}
-          <Route path='/admin/complaintquery' element={<ComplaintQuery/>}/>
-          <Route path='/admin/complaintquery-details/:id' element={<ComplaintQueryDetails/>}/>
+          <Route path='/admin/complaintquery' element={<ComplaintQuery />} />
+          <Route path='/admin/complaintquery-details/:id' element={<ComplaintQueryDetails />} />
 
           {/* policy  */}
           <Route path='/admin/policy' element={<Policy />} />

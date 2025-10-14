@@ -130,7 +130,6 @@ const Policy = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deletepolicy: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
                         }}
                     >
                         <FaTrash />
@@ -149,7 +148,6 @@ const Policy = () => {
 
             if (res.data?.status) {
                 setpolicy(res.data?.data || []);
-                console.log(registerUser)
             }
             else {
                 toast.error(res.data?.message);

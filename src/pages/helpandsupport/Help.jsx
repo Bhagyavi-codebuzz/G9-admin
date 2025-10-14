@@ -74,14 +74,9 @@ const Help = () => {
             width: '12%',
         },
         {
-            name: 'Email',
-            cell: (row) => row.email || '-',
-            width: '17%',
-        },
-        {
-            name: 'Mobile',
-            cell: (row) => row.mobile_no || '-',
-            width: '16%',
+            name: 'Email & Mobile',
+            cell: (row) => row.email_mobileNo || '-',
+            width: '21%',
         },
         {
             name: 'Message',
@@ -259,7 +254,6 @@ const Help = () => {
                 toast.error(res.data?.message || "Failed to fetch data");
             }
         } catch (err) {
-            console.error("Filter-API-Error++", err);
             toast.error("Failed to fetch data");
         }
     };
@@ -312,7 +306,6 @@ const Help = () => {
                 toast.error(res.data?.message);
             }
         } catch (err) {
-            console.error("Export-CSV-Error++", err);
             toast.error("Failed to export data");
         }
     };

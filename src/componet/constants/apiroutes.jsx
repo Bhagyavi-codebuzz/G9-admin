@@ -1,3 +1,5 @@
+import { add } from "date-fns";
+
 export const apiendpoints = {
     // Authentication 
     login: "/auth/logIn",
@@ -113,5 +115,21 @@ export const apiendpoints = {
     addMedia: "/media/add",
     deleteMedia: "/media/delete/:id",
     viewMedia: "/media/detail/:id",
-    editMedia: "/media/edit/:id"
+    editMedia: "/media/edit/:id",
+
+    // Certificate
+    certificate: "/certificate/list",
+    addCertificate: "/certificate/add",
+    deleteCertificate: "/certificate/delete/:id",
+    viewCertificate: "/certificate/detail/:id",
+    editCertificate: "/certificate/edit/:id",
+
+
+    // festival
+    festival: "/festival/list",
+    AddFestival: "/festival/add",
+    deleteFestival: "/festival/delete/:id",
+
+    // settings 
+    settings:"settings/"
 }

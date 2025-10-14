@@ -57,7 +57,6 @@ const FAQEdit = () => {
                 toast.error(res.data?.mesage);
             }
         } catch (err) {
-            console.error(err);
             if (err.response?.status === 400) {
                 toast.error(err.response.data.mesage);
             }

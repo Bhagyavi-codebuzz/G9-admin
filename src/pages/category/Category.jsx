@@ -129,7 +129,7 @@ const Category = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deletecategory: true });
                             setDeleteId(row?.id);
-                            console.log(deleteId)
+                            
                         }}
                     >
                         <FaTrash />
@@ -173,7 +173,6 @@ const Category = () => {
                 );
             }
         } catch (err) {
-            console.error("Status-Toggle-Error++", err);
             toast.error("Failed to update status");
 
             // ❌ revert if error

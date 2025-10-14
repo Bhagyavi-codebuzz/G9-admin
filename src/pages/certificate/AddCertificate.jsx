@@ -9,22 +9,16 @@ import { apiendpoints } from '../../componet/constants/apiroutes';
 
 
 const initialState = {
-    slider: null
+    title: "",
+    certificate: null,
+    subTitle: ""
 }
 
-const AddSlider = () => {
+const AddCertificate = () => {
+
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(initialState);
-
-    const handleChange = (e) => {
-        const { name, value, files } = e.target;
-
-        setFormData((prev) => ({
-            ...prev,
-            [name]: files ? files[0] : value.trimStart(),
-        }));
-    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -32,22 +26,34 @@ const AddSlider = () => {
 
         try {
             const form = new FormData();
-            form.append("slider", formData.slider);
+            form.append("title", formData.title);
+            form.append("certificate", formData.certificate);
+            form.append("subTitle", formData.subTitle);
 
-            const res = await Axios.post(apiendpoints.addSlider, form, authorizationHeadersImage()); // ✅ use `form` here
+            const res = await Axios.post(apiendpoints.addCertificate, form, authorizationHeadersImage()); // ✅ use `form` here
 
             if (res.data?.status) {
                 toast.success(res.data?.message);
                 setFormData(initialState);
-                navigate("/admin/slider");
+                navigate("/admin/certificate");
             } else {
                 toast.error(res.data?.message);
             }
         } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
 
+    }
+
+    const handleChange = (e) => {
+        const { name, value, files } = e.target;
+        let newValue = value
+        setFormData((prev) => ({
+            ...prev,
+            [name]: files ? files[0] : newValue.trimStart(),
+        }));
     }
     return (
         <>
@@ -60,39 +66,72 @@ const AddSlider = () => {
                                     <img src={left} alt="" style={{ height: '30px' }} />
                                 </div>
                                 <div>
-                                    Add Banner
+                                    Add Certificate
                                 </div>
                             </h2>
                         </div>
 
                         <form className="row g-3 gx-4"
-                            onSubmit={handleSubmit}
-                        >
+                            onSubmit={handleSubmit} >
                             <div className="col-12 mb-2">
-                                <label htmlFor="image" className="form-label">
+                                <label htmlFor="certificate" className="form-label">
                                     Image :
                                 </label>
                                 <input
                                     type="file"
-                                    name="slider"
-                                    id="slider"
+                                    name="certificate"
+                                    id="certificate"
                                     className="form-control"
                                     onChange={handleChange}
                                     required
                                     accept="image/jpeg,image/jpg,image/png,image/gif"
                                 />
-                                {formData.slider && (
+                                {formData.certificate && (
                                     <div className="mb-2 mt-2">
                                         <img
-                                            src={URL.createObjectURL(formData?.slider)}
+                                            src={URL.createObjectURL(formData?.certificate)}
                                             alt="Image"
                                             className="img-thumbnail img-fluid"
                                             style={{
-                                                maxWidth: "150px", maxHeight: "150px"
+                                                maxWidth: "120px", maxHeight: "120px"
                                             }}
                                         />
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                <label htmlFor="title" className="form-label">
+                                    Title :
+                                </label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    id="title"
+                                    className="form-control"
+                                    placeholder="Enter Title"
+                                    autoComplete='off'
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="col-lg-6 col-md-6 col-12 mb-2">
+                                <label htmlFor="subTitle" className="form-label">
+                                    Sub Title :
+                                </label>
+                                <input
+                                    type="text"
+                                    name="subTitle"
+                                    id="subTitle"
+                                    className="form-control"
+                                    placeholder="Enter Sub Title"
+                                    autoComplete='off'
+                                    value={formData.subTitle}
+                                    onChange={handleChange}
+                                    required
+                                />
                             </div>
 
                             <div className="text-end">
@@ -117,4 +156,4 @@ const AddSlider = () => {
     )
 }
 
-export default AddSlider
+export default AddCertificate

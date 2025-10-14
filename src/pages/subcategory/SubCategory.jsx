@@ -119,7 +119,6 @@ const SubCategory = () => {
                         onClick={() => {
                             setModalShow({ ...modalShow, deletesubcategory: true });
                             setDeleteId(row?.id);
-                            console.log("Delete Id:", row?.id);
                         }}
                     >
                         <FaTrash />

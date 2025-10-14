@@ -250,7 +250,6 @@ const ComplaintQuery = () => {
                 toast.error(res.data?.message || "Failed to fetch data");
             }
         } catch (err) {
-            console.error("Filter-API-Error++", err);
             toast.error("Failed to fetch data");
         }
     };
@@ -306,7 +305,6 @@ const ComplaintQuery = () => {
                 toast.error(res.data?.message || "Failed to fetch data");
             }
         } catch (err) {
-            console.error("Export-CSV-Error++", err);
             toast.error("Failed to export data");
         }
     };
