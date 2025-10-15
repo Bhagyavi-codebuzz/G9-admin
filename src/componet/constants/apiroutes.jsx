@@ -94,7 +94,7 @@ export const apiendpoints = {
 
     // Order 
     order: "/order/list",
-    orderStatus: "/order/delivered",
+    orderStatus: "/order/status",
     detailOrder: "/order/detail/:id",
 
     // offerbar

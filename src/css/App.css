@@ -384,6 +384,10 @@ input:focus {
   line-height: 0 !important;
 }
 
+.form-control:focus{
+  box-shadow: none !important;
+  border-color:#dee2e6 !important;
+}
 
 
 .dropdown-menu .dropdown-item:hover,
@@ -863,7 +867,9 @@ input[type="time"]::-webkit-datetime-edit-ampm-field {
   padding: 2px;
   border-radius: 6px;
 }
-
+.mobile-input-wrapper input:focus{
+  border: none !important;
+}
 .country-code {
   margin-right: 8px;
   margin-left: 5px;
@@ -1105,3 +1111,8 @@ input[type="time"]::-webkit-datetime-edit-ampm-field {
   font-weight: 700;
   color: black;
 }
+/* .fQcQlC{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} */

@@ -66,7 +66,7 @@ const Order = () => {
         {
             name: 'No.',
             selector: (_, index) => (currentPage - 1) * perPage + (index + 1),
-            width: '80px',
+            width: '70px',
             style: {
                 margin: '10px 0'
             }
@@ -92,7 +92,7 @@ const Order = () => {
         {
             name: 'Order Id',
             cell: (row) => row.orderId || "-",
-            width: "12%",
+            width: "8%",
         },
         {
             name: 'Name',
@@ -100,16 +100,22 @@ const Order = () => {
             width: "12%",
         },
         {
+            name: 'Email',
+            cell: (row) => row.email || "-",
+            width: "16%",
+        },
+        {
             name: 'Amount',
-            cell: (row) => row.paymentDetails?.total
-                ? `${row.paymentDetails.total.toFixed(2)}`
-                : "-",
-            width: "12%",
+            cell: (row) => {
+                const total = Number(row.paymentDetails?.total);
+                return (total || total === 0) ? total.toFixed(2) : "-";
+            },
+            width: "10%",
         },
         {
             name: 'Status',
             cell: (row) => row.status || "-",
-            width: "11%",
+            width: "10%",
         },
         {
             name: 'Total Items',
@@ -132,25 +138,25 @@ const Order = () => {
                     "-"
                 )
             ),
-            width: "10%",
+            width: "9%",
         },
 
-// {
-//     name: 'Description',
-//     cell: (row) => (
-//         row.description
-//             ? <div dangerouslySetInnerHTML={{ __html: row.description }} />
-//             : "-"
-//     ),
-//     width: "15%",
-// },
-{
+        // {
+        //     name: 'Description',
+        //     cell: (row) => (
+        //         row.description
+        //             ? <div dangerouslySetInnerHTML={{ __html: row.description }} />
+        //             : "-"
+        //     ),
+        //     width: "15%",
+        // },
+        {
             name: 'Created Date',
             cell: (row) => (
                 CreatedDate(row.createdAt) || "-"
             ),
             minwidth: "80px",
-            width: "18%"
+            width: "16%"
         },
         {
             name: 'Action',
@@ -344,7 +350,7 @@ const Order = () => {
                                                     onClick={() => {
                                                         setShowFilterDropdown(!showFilterDropdown)
                                                         setShowCustomDatePicker(false);
-                                                        setCustomStartDate(null);  // 🔹 reset start date
+                                                        setCustomStartDate(null);   
                                                         setCustomEndDate(null);
                                                     }
 

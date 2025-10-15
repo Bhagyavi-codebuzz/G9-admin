@@ -289,62 +289,91 @@ const OrderDetails = () => {
                                 </div>
 
                                 {/* Items Details */}
-                                <h3 className="mt-3">Item Details</h3>
+                                <h3 className="mt-4 mb-3">Item Details</h3>
 
                                 {formData?.items && formData.items.length > 0 ? (
-                                    <div className="d-flex flex-column gap-3">
-                                        {formData.items.map((item, index) => (
-                                            <div
-                                                key={index}
-                                                className="p-3 border rounded shadow-sm bg-white align-items-center"
-                                                style={{ display: "grid", gridTemplateColumns: "2fr 1fr 2fr 1fr 1fr 1fr 1fr", gap: "10px" }}
-                                            >
-                                                <div>
-                                                    <strong style={{ fontSize: "16px" }}>Images:</strong>
-                                                    <div className="d-flex flex-wrap gap-2 mt-1">
-                                                        {item.images?.map((img, i) => (
-                                                            <img
-                                                                key={i}
-                                                                src={img}
-                                                                alt={`item-${index}-${i}`}
-                                                                style={{
-                                                                    width: "70px",
-                                                                    height: "70px",
-                                                                    objectFit: "cover",
-                                                                    borderRadius: "6px",
-                                                                    border: "1px solid #ddd"
-                                                                }}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <strong style={{ fontSize: "16px" }}>Product ID:</strong>
-                                                    <div>{item.productId || "-"}</div>
-                                                </div>
-                                                <div>
-                                                    <strong style={{ fontSize: "16px" }}>Title:</strong>
-                                                    <div>{item.title || "-"}</div>
-                                                </div>
-                                                <div>
-                                                    <strong style={{ fontSize: "16px" }}>Quantity:</strong>
-                                                    <div>{item.quantity || "-"}</div>
-                                                </div>
-                                                <div>
-                                                    <strong style={{ fontSize: "16px" }}>Price:</strong>
-                                                    <div>{item.price || "-"}</div>
-                                                </div>
-                                                <div>
-                                                    <strong style={{ fontSize: "16px" }}>Subtotal:</strong>
-                                                    <div>{item.subtotal || "-"}</div>
-                                                </div>
-                                                <div>
-                                                    <strong style={{ fontSize: "16px" }}>Status:</strong>
-                                                    <div>{item.status || "-"}</div>
-                                                </div>
+                                    <div className="table-responsive">
+                                        <table className="table table-bordered align-middle text-center">
+                                            <thead className="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Images</th>
+                                                    <th>Videos</th>
+                                                    <th>Product ID</th>
+                                                    <th>Title</th>
+                                                    <th>Quantity</th>
+                                                    <th>Price</th>
+                                                    <th>Subtotal</th>
+                                                    <th>Status</th>
+                                                    <th>Purity Name</th>
+                                                    <th>Purity Value</th>
+                                                    <th>Profit Original Price</th>
+                                                    <th>Profit Selling Price</th>
+                                                    <th>GST Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {formData.items.map((item, index) => {
+                                                    const media = item.media?.[0];
+                                                    const purity = item.purity || {};
 
-                                            </div>
-                                        ))}
+                                                    return (
+                                                        <tr key={index}>
+                                                            <td>{index + 1}</td>
+                                                            <td>
+                                                                <div className="d-flex flex-wrap justify-content-center gap-2">
+                                                                    {media?.images?.length > 0 ? (
+                                                                        media.images.map((img, i) => (
+                                                                            <img
+                                                                                key={i}
+                                                                                src={img}
+                                                                                alt={`img-${i}`}
+                                                                                style={{
+                                                                                    width: "60px",
+                                                                                    height: "60px",
+                                                                                    objectFit: "cover",
+                                                                                    borderRadius: "6px",
+                                                                                    border: "1px solid #ddd"
+                                                                                }}
+                                                                            />
+                                                                        ))
+                                                                    ) : (
+                                                                        <span>-</span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                {media?.videos?.length > 0 ? (
+                                                                    <div className="d-flex flex-column align-items-center gap-1">
+                                                                        {media.videos.map((vid, i) => (
+                                                                            <video
+                                                                                key={i}
+                                                                                src={vid}
+                                                                                controls
+                                                                                style={{ width: "80px", height: "60px", borderRadius: "6px" }}
+                                                                            />
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <span>-</span>
+                                                                )}
+                                                            </td>
+                                                            <td>{item.productId || "-"}</td>
+                                                            <td>{item.title || "-"}</td>
+                                                            <td>{item.quantity || "-"}</td>
+                                                            <td>{item.price || "-"}</td>
+                                                            <td>{item.subtotal || "-"}</td>
+                                                            <td>{item.status || "-"}</td>
+                                                            <td>{purity.name || "-"}</td>
+                                                            <td>{purity.value || "-"}</td>
+                                                            <td>{purity.profitoriginalprice || "-"}</td>
+                                                            <td>{purity.profitsellingprice || "-"}</td>
+                                                            <td>{item.gstAmount || "-"}</td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 ) : (
                                     <p>No items found</p>
@@ -353,7 +382,7 @@ const OrderDetails = () => {
                                 {/* paymentDetails */}
                                 <h2>Payment Details</h2>
                                 <div className='d-flex justify-content-between'>
-                                    <strong style={{ fontSize: "20px"}}>Sub Total :</strong>
+                                    <strong style={{ fontSize: "20px" }}>Sub Total :</strong>
                                     <div style={{ fontSize: "20px" }}>{formData?.paymentDetails?.subtotal || "-"}</div>
                                 </div>
                                 <div className='d-flex justify-content-between mt-2'>
@@ -361,7 +390,7 @@ const OrderDetails = () => {
                                     <div style={{ fontSize: "18px" }}>{formData?.paymentDetails?.gst || "-"}</div>
                                 </div>
                                 <div className='d-flex justify-content-between mt-2'>
-                                    <strong style={{ fontSize: "20px", color: "black"  }}>Total :</strong>
+                                    <strong style={{ fontSize: "20px", color: "black" }}>Total :</strong>
                                     <div style={{ fontSize: "20px" }}>{formData?.paymentDetails?.total || "-"}</div>
                                 </div>
                             </form>

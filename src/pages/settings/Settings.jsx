@@ -29,7 +29,7 @@ const Settings = () => {
             form.append("returnCharge", formData.returnCharge);
             form.append("askPrice", formData.askPrice);
 
-            const res = await Axios.post(apiendpoints.settings, form, authorizationHeaders()); // ✅ use `form` here
+            const res = await Axios.post(apiendpoints.settings, form, authorizationHeaders());
 
             if (res.data?.status) {
                 toast.success(res.data?.message);
@@ -51,12 +51,13 @@ const Settings = () => {
     const handleInput = (e) => {
         const { name, value } = e.target;
 
-
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value
-        }));
-
+        
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
 

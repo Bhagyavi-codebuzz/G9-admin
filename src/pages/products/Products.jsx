@@ -59,7 +59,7 @@ const Products = () => {
         {
             name: 'No.',
             selector: (_, index) => (currentPage - 1) * perPage + (index + 1),
-            width: '80px',
+            width: '100px',
             style: {
                 margin: '10px 0'
             }
@@ -91,22 +91,17 @@ const Products = () => {
         {
             name: 'Stock Number',
             cell: (row) => row.stockNumber || "-",
-            width: "12%",
+            width: "14%",
         },
         {
             name: 'Category Name',
             cell: (row) => row.categoryName || "-",
-            width: "14%",
+            width: "16%",
         },
         {
             name: 'Sub Category Name',
             cell: (row) => row.subCategoryName || "-",
-            width: "14%",
-        },
-        {
-            name: 'Status',
-            cell: (row) => row.status || "-",
-            width: "11%",
+            width: "16%",
         },
         {
             name: 'Created Date',
@@ -114,7 +109,7 @@ const Products = () => {
                 CreatedDate(row.createdAt) || "-"
             ),
             minwidth: "70px",
-            width: "15%"
+            width: "18%"
         },
         {
             name: 'Action',

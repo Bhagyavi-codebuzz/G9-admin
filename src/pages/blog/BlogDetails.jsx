@@ -75,7 +75,7 @@ const BlogDetails = () => {
                         ) : (
                             <form className="row g-3">
                                 <div className="col-lg-6 col-md-6 col-12 mb-2 d-flex flex-column">
-                                    <label htmlFor="donatorphoto" className="form-label">
+                                    <label htmlFor="photo" className="form-label">
                                         Photo :
                                     </label>
                                     <button type='button' className='submit-btn ' style={{ width: '100%', maxWidth: '157px' }} onClick={handleOpen}>View</button>

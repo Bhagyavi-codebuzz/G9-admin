@@ -5,6 +5,7 @@ import { apiendpoints } from '../../componet/constants/apiroutes';
 import left from '../../assets/images/lefticon.png';
 import { toast } from 'react-toastify';
 import PhoneInput from 'react-phone-input-2';
+import { Modal } from 'react-bootstrap';
 import { formatDisplayNumber, parseBackendPhone } from '../../utils/PhoneUtils';
 import { FlagImage } from 'react-international-phone';
 
@@ -14,6 +15,10 @@ const RegisterUserDetails = () => {
 
     const [formData, setFormData] = useState({});
     const [loader, setLoader] = useState(false); // ✅ loader state
+    const [show, setShow] = useState(false);
+
+    const handleClose = () => setShow(false);
+    const handleOpen = () => setShow(true);
 
     const getRegisterUserDetails = async (id) => {
         setLoader(true); // start loader
@@ -73,6 +78,12 @@ const RegisterUserDetails = () => {
                             </div>
                         ) : (
                             <form className="form row g-3">
+                                <div className="col-12 mb-2 d-flex flex-column">
+                                    <label htmlFor="photo" className="form-label">
+                                        Photo :
+                                    </label>
+                                    <button type='button' className='submit-btn ' style={{ width: '100%', maxWidth: '157px' }} onClick={handleOpen}>View</button>
+                                </div>
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <label htmlFor="name" className="form-label">Name :</label>
                                     <input
@@ -114,7 +125,7 @@ const RegisterUserDetails = () => {
                                         <input
                                             type="text"
                                             className="border-0"
-                                            value={formData?.Mobile_number || ""}
+                                            value={formData?.Mobile_number || "-"}
                                             readOnly
                                         />
                                     </div>
@@ -135,6 +146,19 @@ const RegisterUserDetails = () => {
                     </div>
                 </div>
             </section>
+
+            <Modal show={show} onHide={handleClose} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Image Preview</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="text-center">
+                    <img
+                        src={formData.profile}
+                        alt="Preview"
+                        className="img-fluid"
+                    />
+                </Modal.Body>
+            </Modal >
         </>
     );
 };

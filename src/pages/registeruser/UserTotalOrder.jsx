@@ -69,12 +69,17 @@ const UserTotalOrder = () => {
         {
             name: 'Order Id',
             cell: (row) => row.orderId || "-",
-            width: "12%",
+            width: "10%",
         },
         {
             name: 'Name',
             cell: (row) => row.name || "-",
-            width: "12%",
+            width: "10%",
+        },
+        {
+            name: 'Email',
+            cell: (row) => row.email || "-",
+            width: "14%",
         },
         {
             name: 'Amount',
@@ -82,32 +87,35 @@ const UserTotalOrder = () => {
                 row.paymentDetails?.total
                     ? `₹${parseFloat(row.paymentDetails.total).toFixed(2)}`
                     : "-",
-            width: "12%",
+            width: "8%",
         },
         {
             name: 'Status',
             cell: (row) => row.status || "-",
-            width: "12%",
+            width: "8%",
         },
         {
             name: 'Total Order Items',
-            cell: (row) => (
-                <span
-                    onClick={() =>
-                        navigate(`/admin/totalitem/${row.id}`, {
-                            state: {
-                                items: row.items,
-                            },
-                        })
-                    }
-                    style={{
-                        cursor: "pointer",
-                        textDecoration: "underline"
-                    }}
-                >
-                    {row.totalItems || "-"}
-                </span>
-            ),
+            cell: (row) => {
+                const hasValue = row.totalItems !== undefined && row.totalItems !== null && row.totalItems !== "" && row.totalItems !== 0;
+                return hasValue ? (
+                    <span
+                        onClick={() =>
+                            navigate(`/admin/totalitem/${row.id}`, {
+                                state: { items: row.items },
+                            })
+                        }
+                        style={{
+                            cursor: "pointer",
+                            textDecoration: "underline",
+                        }}
+                    >
+                        {row.totalItems}
+                    </span>
+                ) : (
+                    <span>-</span>
+                );
+            },
             width: "12%",
         },
         // {
@@ -125,7 +133,7 @@ const UserTotalOrder = () => {
                 CreatedDate(row.createdAt) || "-"
             ),
             minwidth: "80px",
-            width: "20%"
+            width: "14%"
         },
         {
             name: 'Action',

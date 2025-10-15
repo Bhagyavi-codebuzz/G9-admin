@@ -1,4 +1,4 @@
-import { BlogIcon, CategoryIcon, ComplaintQueryIcon, DashboardIcon, FAQIcon, HelpIcon, LogOutIcon, MaterialIcon, MediaIcon, OfferBarIcon, OrderIcon, PolicyIcon, ProductIcon, SliderIcon, SubcategoryIcon, UserlistIcon } from "../../assets/IconsList";
+import { BlogIcon, CategoryIcon, CertificateIcon, ComplaintQueryIcon, DashboardIcon, FAQIcon, FestivalIcons, HelpIcon, LogOutIcon, MaterialIcon, MediaIcon, OfferBarIcon, OrderIcon, PolicyIcon, ProductIcon, SettingsIcon, SliderIcon, SubcategoryIcon, UserlistIcon } from "../../assets/IconsList";
 
 
 export const SidebarData = [
@@ -19,7 +19,7 @@ export const SidebarData = [
     },
     {
         label: "Festival Offer",
-        icon: <SliderIcon />,
+        icon: <FestivalIcons />,
         route: "/admin/festival",
     },
     {
@@ -67,7 +67,7 @@ export const SidebarData = [
     // },
     {
         label: "Certificate",
-        icon: <BlogIcon />,
+        icon: <CertificateIcon />,
         route: "/admin/certificate",
     },
     {
@@ -87,7 +87,7 @@ export const SidebarData = [
     },
     {
         label: "Settings",
-        icon: <FAQIcon />,
+        icon: <SettingsIcon />,
         route: "/admin/settings",
     },
     {
@@ -126,6 +126,12 @@ export const DashboardContent = [
         route: "/admin/offerbar",
     },
     {
+        title: "Total Festival Offer",
+        icon: <FestivalIcons />,
+        apiCount: "totalfestivalOffer",
+        route: "/admin/festival",
+    },
+    {
         title: "Total Banners",
         icon: <SliderIcon />,
         apiCount: "totalSlider",
@@ -156,11 +162,12 @@ export const DashboardContent = [
         apiCount: "totalProducts",
         route: "/admin/products"
     },
+
     {
-        title: "Total Media",
-        icon: <MediaIcon />,
-        apiCount: "totalmedia",
-        route: "/admin/media",
+        title: "Total Certificate",
+        icon: <CertificateIcon />,
+        apiCount: "totalCertificate",
+        route: "/admin/certificate",
     },
     {
         title: 'Total Blogs',
@@ -168,7 +175,12 @@ export const DashboardContent = [
         apiCount: "totalBlogs",
         route: "/admin/blog",
     },
-
+    {
+        title: "Total Media",
+        icon: <MediaIcon />,
+        apiCount: "totalmedia",
+        route: "/admin/media",
+    },
     {
         title: "Total FAQ's",
         icon: <FAQIcon />,
@@ -182,7 +194,7 @@ export const DashboardContent = [
         route: "/admin/help",
     },
     {
-        title: "Complaint Query",
+        title: "Total Complaint Query",
         icon: <ComplaintQueryIcon />,
         apiCount: "totalComplaintQuery",
         route: "/admin/complaintquery",
