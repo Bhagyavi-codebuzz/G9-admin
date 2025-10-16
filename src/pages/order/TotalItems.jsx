@@ -170,8 +170,8 @@ const TotalItems = () => {
             }
         },
         {
-            name: 'Title',
-            cell: (row) => row.title || "-",
+            name: 'Stock Number',
+            cell: (row) => row.stockNumber || "-",
             width: "11%",
         },
         {
@@ -306,7 +306,7 @@ const TotalItems = () => {
                                         </div>
                                         <div>
                                             Total Items
-                                        </div>
+                                        </div> 
                                     </h2>
                                 </div>
                             </div>

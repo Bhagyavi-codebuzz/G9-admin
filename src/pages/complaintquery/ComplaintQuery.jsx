@@ -121,17 +121,18 @@ const ComplaintQuery = () => {
         },
         {
             name: 'Action',
+            center: "true",
             cell: (row) => (
                 <div className="d-flex align-items-center">
                     <button
                         type="button"
                         className="btn btn-sm btn-neutral text-nowrap me-3 border"
-                        // onClick={() =>
-                        //     window.open(
-                        //         "https://mail.google.com/mail/?view=cm&fs=1&to=support@example.com&su=Support&body=Hello",
-                        //         "_blank"
-                        //     )
-                        // }
+                    // onClick={() =>
+                    //     window.open(
+                    //         "https://mail.google.com/mail/?view=cm&fs=1&to=support@example.com&su=Support&body=Hello",
+                    //         "_blank"
+                    //     )
+                    // }
                     >
                         <FaEnvelope />
                     </button>

@@ -91,6 +91,7 @@ const StoneShape = () => {
         },
         {
             name: 'Action',
+            center: "true",
             cell: (row) =>
             (
                 <div className="d-flex align-items-center">

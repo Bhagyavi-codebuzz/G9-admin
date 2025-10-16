@@ -193,6 +193,7 @@ const RegisterUser = () => {
     },
     {
       name: 'Action',
+      center: "true",
       cell: (row) => (
         <div className="d-flex align-items-center">
           <button
@@ -205,7 +206,7 @@ const RegisterUser = () => {
             <FaEye />
           </button>
 
-          <button
+          {/* <button
             type="button"
             className="btn btn-sm btn-neutral text-nowrap eye-icon border"
             onClick={() => {
@@ -214,7 +215,7 @@ const RegisterUser = () => {
             }}
           >
             <FaTrash />
-          </button>
+          </button> */}
         </div>
       ),
       width: '130px'

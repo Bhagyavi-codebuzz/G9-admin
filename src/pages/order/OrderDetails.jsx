@@ -7,6 +7,7 @@ import { Modal } from 'react-bootstrap';
 import { Editor } from 'primereact/editor';
 import { authorizationHeaders, Axios } from '../../componet/helper/Axios';
 import { apiendpoints } from '../../componet/constants/apiroutes';
+import { FaEye } from 'react-icons/fa';
 
 
 const OrderDetails = () => {
@@ -207,6 +208,7 @@ const OrderDetails = () => {
                                         </div>
                                     </div>
                                 </div>
+
                                 <div className="col-lg-6 col-md-6 col-12 mb-2">
                                     <div className="row">
                                         <div className="col-lg-6 col-md-6 col-12 mb-2">
@@ -297,19 +299,20 @@ const OrderDetails = () => {
                                             <thead className="table-light">
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Images</th>
-                                                    <th>Videos</th>
-                                                    <th>Product ID</th>
-                                                    <th>Title</th>
-                                                    <th>Quantity</th>
-                                                    <th>Price</th>
-                                                    <th>Subtotal</th>
-                                                    <th>Status</th>
+                                                    <th>Stock Number</th>
+                                                    <th>Color</th>
                                                     <th>Purity Name</th>
-                                                    <th>Purity Value</th>
+                                                    {/* <th>Product ID</th> */}
+                                                    <th>Quantity</th>
+                                                    {/* <th>Title</th> */}
+                                                    <th>Unit Price</th>
+                                                    <th>Total Price</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                                    {/* <th>Purity Value</th>
                                                     <th>Profit Original Price</th>
                                                     <th>Profit Selling Price</th>
-                                                    <th>GST Amount</th>
+                                                    <th>GST Amount</th> */}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -320,7 +323,7 @@ const OrderDetails = () => {
                                                     return (
                                                         <tr key={index}>
                                                             <td>{index + 1}</td>
-                                                            <td>
+                                                            {/* <td>
                                                                 <div className="d-flex flex-wrap justify-content-center gap-2">
                                                                     {media?.images?.length > 0 ? (
                                                                         media.images.map((img, i) => (
@@ -341,8 +344,8 @@ const OrderDetails = () => {
                                                                         <span>-</span>
                                                                     )}
                                                                 </div>
-                                                            </td>
-                                                            <td>
+                                                            </td> */}
+                                                            {/* <td>
                                                                 {media?.videos?.length > 0 ? (
                                                                     <div className="d-flex flex-column align-items-center gap-1">
                                                                         {media.videos.map((vid, i) => (
@@ -357,18 +360,33 @@ const OrderDetails = () => {
                                                                 ) : (
                                                                     <span>-</span>
                                                                 )}
-                                                            </td>
-                                                            <td>{item.productId || "-"}</td>
-                                                            <td>{item.title || "-"}</td>
+                                                            </td> */}
+                                                            <td>{item?.stockNumber || "-"}</td>
+                                                            <td>{media?.name}</td>
+                                                            <td>{purity.name || "-"}</td>
+                                                            {/* <td>{item.productId || "-"}</td> */}
                                                             <td>{item.quantity || "-"}</td>
+                                                            {/* <td>{item.title || "-"}</td> */}
                                                             <td>{item.price || "-"}</td>
                                                             <td>{item.subtotal || "-"}</td>
                                                             <td>{item.status || "-"}</td>
-                                                            <td>{purity.name || "-"}</td>
-                                                            <td>{purity.value || "-"}</td>
+                                                            <td>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-neutral text-nowrap eye-icon me-3 border"
+                                                                    onClick={() => {
+                                                                        if (item?.productLink) {
+                                                                            window.open(item.productLink, '_blank');
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <FaEye />
+                                                                </button>
+                                                            </td>
+                                                            {/* <td>{purity.value || "-"}</td>
                                                             <td>{purity.profitoriginalprice || "-"}</td>
                                                             <td>{purity.profitsellingprice || "-"}</td>
-                                                            <td>{item.gstAmount || "-"}</td>
+                                                            <td>{item.gstAmount || "-"}</td> */}
                                                         </tr>
                                                     );
                                                 })}
@@ -380,7 +398,7 @@ const OrderDetails = () => {
                                 )}
 
                                 {/* paymentDetails */}
-                                <h2>Payment Details</h2>
+                                <h3>Payment Details</h3>
                                 <div className='d-flex justify-content-between'>
                                     <strong style={{ fontSize: "20px" }}>Sub Total :</strong>
                                     <div style={{ fontSize: "20px" }}>{formData?.paymentDetails?.subtotal || "-"}</div>
